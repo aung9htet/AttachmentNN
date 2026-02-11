@@ -309,6 +309,45 @@ All experiment data is automatically saved to the `data` directory within the co
    - Use `./save_docker.bash` to commit all changes to the image
    - Data will be preserved in the Docker image for future use
 
+## Experimental Data
+
+Pre-collected experimental data is included in the `data/` directory. Each experiment folder (`experiment_data_{index}/`) contains:
+- `camera_recording.mp4` - Video recording of the robot interaction
+- `child_data.npy` - Child robot behavioral data
+- `parent_data.npy` - Parent robot behavioral data
+
+### Data Structure
+
+Each `.npy` file contains a dictionary with the following fields:
+```python
+{
+    'Xc': [],                           # Child position coordinates
+    'Xp': [],                           # Parent position coordinates
+    'ambivalence': [],                  # Ambivalence parameter values
+    'avoidance': [],                    # Avoidance parameter values
+    'physical_coupling_targets': [],    # Physical distance coupling targets
+    'emotional_coupling_targets': [],   # Emotional distance coupling targets
+    'child_states': [],                 # Child internal states
+    'parent_states': [],                # Parent internal states
+    'vocal_child': [],                  # Child vocalization events
+    'vocal_parent': [],                 # Parent vocalization events
+    'child_evidence_trace': [],         # Child evidence accumulation
+    'parent_evidence_trace': []         # Parent evidence accumulation
+}
+```
+
+### Dataset Organization
+
+**Training Data** (3 minutes per run):
+- `experiment_data_0`: Avoidance = 0.0, Ambivalence = 0.0
+- `experiment_data_1` to `8`: Avoidance = 0.1 to 0.8, Ambivalence = 0.0
+- `experiment_data_9` to `16`: Avoidance = 0.0, Ambivalence = 0.1 to 0.8
+
+**Experimental Data** (1 minute per run):
+- `experiment_data_17`: Avoidance = 0.0, Ambivalence = 0.0
+- `experiment_data_18` to `25`: Avoidance = 0.1 to 0.8, Ambivalence = 0.0
+- `experiment_data_26` to `33`: Avoidance = 0.0, Ambivalence = 0.1 to 0.8
+
 ## Training the Neural Network
 
 After collecting experimental data, you can train neural networks to learn the coupling functions between parent and child behaviors.
