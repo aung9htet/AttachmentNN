@@ -87,34 +87,15 @@ To start the Docker container with all necessary configurations:
 
 This script will:
 - Enable X11 forwarding for GUI applications
-- Mount the workspace directory for file sharing (optional)
-- Configure GPU support (if available)
-- Launch the container with the name `ros_container`
+- Mount this repository's ROS package into the container's catkin workspace
+- Configure GPU support
+- Launch the container with the name `ros_container` (or open a new shell in it if it already exists)
 
-**Note on Volume Mounting (Optional):**
+**How the project is shared with the container**
 
-The `run_docker.bash` script includes a volume mount on line 9. This is **optional** for the current experiment since all data is saved within the Docker image itself. However, you may want to set this up if you need to:
-- Share files between your host machine and the container
-- Access experiment data from outside the container
-- Use the container for other projects requiring local file access
+The ROS package lives in this repository at `ros/Attachment-Model/` and is bind-mounted to `/root/mdk/catkin_ws/src/Attachment-Model` inside the container. The `analysis/` folder is mounted at `/root/analysis`. Code edits, recorded data and figures are therefore the same files on both sides: anything an experiment saves appears in this repository and can be committed and pushed.
 
-To enable volume mounting, update line 9 in `run_docker.bash` to match your local directory:
-```bash
---volume="/home/YOUR_USERNAME/YOUR_PATH:/root/docker-ws"
-```
-
-If you don't need this feature, you can leave it as is or comment out the line by adding `#` at the beginning.
-
-**Alternative: Using VS Code to Transfer Files**
-
-If you just want to share or retrieve data without setting up volume mounts, you can use Visual Studio Code's Docker extension:
-1. Install the "Docker" extension in VS Code
-2. Right-click on your running container in the Docker view
-3. Select "Attach Visual Studio Code" to open the container filesystem
-4. Use VS Code's file explorer to drag-and-drop files between your host and container
-5. Or use the command palette: "Docker: Copy from Container" / "Docker: Copy to Container"
-
-This method is convenient for occasional file transfers without permanent volume mounts.
+The mount is set up when the container is created. If you already have a `ros_container` from before this change, remove it once (`docker rm -f ros_container`) and run `./run_docker.bash` again.
 
 ### 3. Working Inside the Container
 
@@ -230,123 +211,151 @@ Once inside the Docker container, you can run the attachment model experiment.
 To launch the attachment model simulation:
 
 ```bash
-roslaunch attachment_model relationship.launch
+roslaunch attachment_model relationship.launch avoidant:=0.0 ambivalent:=0.1 duration:=300
 ```
+
+| Argument | Default | Meaning |
+|---|---|---|
+| `avoidant` | `0.0` | Avoidance level, 0.0 to 1.0 (emotional-distance coupling) |
+| `ambivalent` | `0.0` | Ambivalence level, 0.0 to 1.0 (physical-distance coupling) |
+| `duration` | `0` | Run length in simulation seconds; `0` runs until Ctrl+C |
+| `gui` | `true` | Show the Gazebo client and the camera preview window |
 
 **What happens when you start the experiment:**
 
-1. **Gazebo Simulation Launches**: Opens a 3D robot simulation environment with MiRo robots
+1. **Gazebo Simulation Launches**: Opens the arena (`worlds/attachment.world`) with the parent and child MiRo robots
 2. **Robot Nodes Start**: Initializes child and parent robot control nodes
-3. **Attachment Model Runs**: The central attachment controller executes the attachment model (either coupled or uncoupled through a neural network)
+3. **Attachment Model Runs**: The attachment controller executes the attachment model (coupled through the neural networks)
 4. **Perception System Activates**: AprilTag detection for robot tracking and localization
-5. **Data Recording Begins**: 
-   - Camera streams are recorded to video files (`camera_recording.mp4`)
-   - Robot behavior data is saved as NumPy arrays (`child_data.npy`, `parent_data.npy`)
-   - All data is automatically saved to `/root/mdk/catkin_ws/src/Attachment-Model/data`
+5. **Data Recording Begins**:
+   - Camera stream is recorded to `camera_recording.mp4`
+   - Robot behavior data, robot paths and inter-robot distance are saved as NumPy dictionaries (`child_data.npy`, `parent_data.npy`)
+   - Run parameters are saved to `meta.json`
+   - Everything goes to a new `ros/Attachment-Model/data/experiment_data_{index}/` folder
+6. **The run ends** after `duration` seconds; all nodes save their data on shutdown
 
-### Configuring Model Parameters
+### Recording a batch of experiments
 
-You can adjust the attachment model's emotional parameters to test different behaviors:
+`run_experiments.sh` records several conditions one after another (run it inside the container):
 
-**Location**: `/root/mdk/catkin_ws/src/Attachment-Model/src/subscribers.py` (lines 88-99)
-
-```python
-class EmotionSubscriber:
-    """
-        Subscribe to emotion parameters.
-    """
-    def __init__(self):
-        self.avoidant = 0.0      # Avoidance level (0.0 to 1.0)
-        self.ambivalent = 0.0    # Ambivalence level (0.0 to 1.0)
-        self.subscriber = rospy.Subscriber("/emotion", Emotion, self._callback)
-
-    def _callback(self, msg):
-        self.avoidant = msg.avoidant
-        self.ambivalent = msg.ambivalent
+```bash
+cd /root/mdk/catkin_ws/src/Attachment-Model
+./run_experiments.sh paper     # secure, strongly avoidant, moderately ambivalent; 5 min each
+./run_experiments.sh sweep     # avoidant 0.1-0.8 and ambivalent 0.1-0.8; 3 min each
+./run_experiments.sh run 0.3 0.0 120   # one run: avoidant, ambivalent, seconds
 ```
 
-**Parameters:**
-- `self.avoidant`: Controls avoidance behavior (range: 0.0 to 1.0)
-- `self.ambivalent`: Controls ambivalent behavior (range: 0.0 to 1.0)
+### Note on the avoidant and ambivalent parameters
 
-Modify these values to explore different attachment styles and behavioral patterns.
+Until `experiment_data_33` the controller applied the two parameters the wrong way round: the value labelled *ambivalent* drove the avoidant (emotional-distance) coupling and the value labelled *avoidant* drove the ambivalent (physical-distance) coupling. This is fixed for all runs that have a `meta.json` (`"param_mapping": "fixed"`). The analysis scripts correct the labels of the earlier runs when loading them. The four `.pth` networks were trained on the earlier runs.
 
 ### Project Structure
 
-The project files are organized as follows:
+The ROS package is in `ros/Attachment-Model/` (inside the container: `/root/mdk/catkin_ws/src/Attachment-Model`):
 
-- **Source Code**: `/root/mdk/catkin_ws/src/Attachment-Model/src`
-  - `subscribers.py` - Contains emotion parameters and subscriber logic
+- **Source Code**: `src/`
+  - `subscribers.py` - Subscribers for odometry, ground truth, actions and the emotion parameters
+  - `agents.py` - Shared agent logic and data recording
   - `child_node.py` - Child robot control script
   - `parent_node.py` - Parent robot control script
-  - `attachment_model_control.py` - Central attachment controller
+  - `attachment_model_control.py` - Attachment controller
   - `perception.py` - AprilTag detection and tracking
   - `camera_recording.py` - Video recording node
+  - `experiment_timer.py` - Ends a run after its duration and writes `meta.json`
+- **Launch file**: `launch/relationship.launch`
+- **Simulation**: `worlds/attachment.world`, `models/`
+- **Experiment Data**: `data/experiment_data_{index}/`
 
-- **Experiment Data**: `/root/mdk/catkin_ws/src/Attachment-Model/data`
-  - Organized by experiment runs (e.g., `experiment_data_0/`, `experiment_data_1/`, etc.)
-  - Each experiment folder contains:
-    - `camera_recording.mp4` - Video recording of the simulation
-    - `child_data.npy` - Child robot behavioral data
-    - `parent_data.npy` - Parent robot behavioral data
-
-### Accessing Experiment Data
-
-All experiment data is automatically saved to the `data` directory within the container. To retrieve your data:
-
-1. **Option 1 - Using VS Code** (see Development Tools section below):
-   - Attach VS Code to the running container
-   - Navigate to `/root/mdk/catkin_ws/src/Attachment-Model/data`
-   - Copy files to your host machine
-
-2. **Option 2 - Using Docker commands**:
-   ```bash
-   # From your host machine (in a new terminal)
-   docker cp ros_container:/root/mdk/catkin_ws/src/Attachment-Model/data ./experiment_results
-   ```
-
-3. **Option 3 - Save the entire container**:
-   - Use `./save_docker.bash` to commit all changes to the image
-   - Data will be preserved in the Docker image for future use
+Analysis scripts are in `analysis/` at the repository root.
 
 ## Experimental Data
 
-Pre-collected experimental data is included in the `data/` directory. Each experiment folder (`experiment_data_{index}/`) contains:
+Pre-collected experimental data is included in the `ros/Attachment-Model/data/` directory. Each experiment folder (`experiment_data_{index}/`) contains:
 - `camera_recording.mp4` - Video recording of the robot interaction
 - `child_data.npy` - Child robot behavioral data
 - `parent_data.npy` - Parent robot behavioral data
 
 ### Data Structure
 
-Each `.npy` file contains a dictionary with the following fields:
+Each `.npy` file contains a dictionary. `child_data.npy` holds the child's series and `parent_data.npy` the parent's; the shared and position keys are in both. One sample is taken every 0.1 s.
+
 ```python
 {
-    'Xc': [],                           # Child position coordinates
-    'Xp': [],                           # Parent position coordinates
+    'Xc': [],                           # Child [need, accumulated need]
+    'Xp': [],                           # Parent [need, accumulated need]
     'ambivalence': [],                  # Ambivalence parameter values
     'avoidance': [],                    # Avoidance parameter values
     'physical_coupling_targets': [],    # Physical distance coupling targets
     'emotional_coupling_targets': [],   # Emotional distance coupling targets
-    'child_states': [],                 # Child internal states
-    'parent_states': [],                # Parent internal states
+    'child_states': [],                 # Child action (0 approach, 1 explore)
+    'parent_states': [],                # Parent action (0 approach, 1 explore)
     'vocal_child': [],                  # Child vocalization events
     'vocal_parent': [],                 # Parent vocalization events
     'child_evidence_trace': [],         # Child evidence accumulation
-    'parent_evidence_trace': []         # Parent evidence accumulation
+    'parent_evidence_trace': [],        # Parent evidence accumulation
+
+    # Recorded from experiment_data_34 onwards
+    'time': [],                         # Simulation time (s)
+    'child_odom': [],                   # Child odometry path [x, y, yaw] in the world frame (m, degrees)
+    'parent_odom': [],                  # Parent odometry path [x, y, yaw] in the world frame
+    'child_odom_raw': [],               # Child odometry as published (starts at 0 in the robot's own frame)
+    'parent_odom_raw': [],              # Parent odometry as published
+    'child_gt': [],                     # Child true position [x, y] from Gazebo (m)
+    'parent_gt': [],                    # Parent true position [x, y] from Gazebo (m)
+    'odom_distance': [],                # Child-parent distance from odometry (m)
+    'odom_distance_norm': [],           # min(1, odom_distance / arena size)
+    'gt_distance': [],                  # Child-parent distance from true positions (m)
+    'gt_distance_norm': []              # min(1, gt_distance / arena size)
 }
 ```
 
+MiRo's wheel odometry starts at zero in each robot's own frame and drifts, most of all when the child pushes against a wall. The odometry path is saved in the world frame using the spawn poses, and the true Gazebo position is saved next to it. See `analysis/figures/improved/odometry_error.png`.
+
+The arena is 2.61 m wide, centred on the caregiver box at (0.325, 0.325).
+
 ### Dataset Organization
 
-**Training Data** (3 minutes per run):
-- `experiment_data_0`: Avoidance = 0.0, Ambivalence = 0.0
-- `experiment_data_1` to `8`: Avoidance = 0.1 to 0.8, Ambivalence = 0.0
-- `experiment_data_9` to `16`: Avoidance = 0.0, Ambivalence = 0.1 to 0.8
+**Earlier runs, no robot positions** (labels below are as recorded; the two parameters were applied the wrong way round, see the note above):
+- `experiment_data_0` to `16`: training data, 3 minutes per run
+  - `0`: Avoidance = 0.0, Ambivalence = 0.0
+  - `1` to `8`: Avoidance = 0.1 to 0.8, Ambivalence = 0.0
+  - `9` to `16`: Avoidance = 0.0, Ambivalence = 0.1 to 0.8
+- `experiment_data_17` to `33`: experimental data, 1 minute per run, same order as above
 
-**Experimental Data** (1 minute per run):
-- `experiment_data_17`: Avoidance = 0.0, Ambivalence = 0.0
-- `experiment_data_18` to `25`: Avoidance = 0.1 to 0.8, Ambivalence = 0.0
-- `experiment_data_26` to `33`: Avoidance = 0.0, Ambivalence = 0.1 to 0.8
+**Runs with robot paths and `meta.json`** (parameters applied as labelled):
+- `experiment_data_34`: secure, Avoidance = 0.0, Ambivalence = 0.1, 5 minutes
+- `experiment_data_35`: strongly avoidant, Avoidance = 0.9, Ambivalence = 0.0, 5 minutes
+- `experiment_data_36`: moderately ambivalent, Avoidance = 0.0, Ambivalence = 0.4, 5 minutes
+- `experiment_data_37` to `44`: Avoidance = 0.1 to 0.8, Ambivalence = 0.0, 3 minutes
+- `experiment_data_45` to `52`: Avoidance = 0.0, Ambivalence = 0.1 to 0.8, 3 minutes
+- `experiment_data_53`: Avoidance = 0.0, Ambivalence = 0.0, 3 minutes
+
+In the runs with avoidance 0.5 and above (`35`, `41` to `44`) the oscillator model diverges within the first seconds and the child stays in approach mode next to the caregiver. The same happens in the earlier runs `5`, `14`, `15` and `16`. `analysis/results/run_summary.csv` flags these runs in the `model_diverged` column.
+
+## Analysis and Figures
+
+The `analysis/` folder reproduces the robot-experiment analysis of the npj paper (in `papers/`) for this project and adds redesigned versions of the figures. Run it inside the container:
+
+```bash
+/workspace/.venv/bin/python /root/analysis/make_figures.py
+```
+
+| Output | Content |
+|---|---|
+| `analysis/figures/paper_style/fig11_trajectory_distance_vocalisation` | Child trajectory, distance and vocalisation per regime (paper Fig. 11) |
+| `analysis/figures/paper_style/fig12_heatmaps` | 50 x 50 occupancy heat maps (paper Fig. 12) |
+| `analysis/figures/paper_style/fig9_trajectory_distance_needs` | Trajectory, distance with vocalisation, needs (paper Fig. 9 layout) |
+| `analysis/figures/paper_style/fig3_correlation_frequency` | Need correlation and oscillation frequency against each parameter (paper Fig. 3) |
+| `analysis/figures/improved/` | Redesigned regime, heat-map, proximity, parameter-sweep and odometry-error figures |
+| `analysis/results/proximity_stats.md` | Time close to the caregiver: chi-squared and Bonferroni-corrected pairwise tests (paper section 6.3) |
+| `analysis/results/run_summary.csv` | One row of measures per run |
+
+Each figure is written as PNG and PDF.
+
+- Positions come from Gazebo's true robot position by default, because wheel odometry drifts by more than a metre within a run. Add `--source odom` to use the odometry path instead.
+- "Close to the caregiver" means inside the square centred on the caregiver whose side is half the arena width.
+- Periods when the exploring child stays in one heat-map cell for longer than the mean plus two standard deviations are treated as stuck and excluded, as in the paper.
+- The three regimes are picked by parameter value (`REGIMES` in `make_figures.py`); the longest matching run is used.
 
 ## Training the Neural Network
 

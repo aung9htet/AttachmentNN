@@ -1,0 +1,2 @@
+bool left_detection
+bool right_detection

@@ -1,0 +1,8 @@
+int64 child
+int64 parent
+float64 emotional_distance
+float64 physical_distance
+float64 child_need
+float64 parent_need
+float64 child_accumulated_need
+float64 parent_accumulated_need

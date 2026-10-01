@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!-- Attachment model experiment: Gazebo world with a parent and a child MiRo. -->
+<!-- Usage: roslaunch attachment_model relationship.launch avoidant:=0.0 ambivalent:=0.1 duration:=300 -->
+<launch>
+  <!-- Attachment style parameters (0.0 to 1.0) -->
+  <arg name="avoidant" default="0.0"/>
+  <arg name="ambivalent" default="0.0"/>
+  <!-- Run length in simulation seconds; 0 runs until Ctrl+C -->
+  <arg name="duration" default="0"/>
+  <!-- Show the Gazebo client and the camera preview window -->
+  <arg name="gui" default="true"/>
+
+  <param name="/attachment/avoidant" value="$(arg avoidant)" type="double"/>
+  <param name="/attachment/ambivalent" value="$(arg ambivalent)" type="double"/>
+
+  <!-- Gazebo Simulation: world and arena from this package, MiRo model from the MDK -->
+  <env name="GAZEBO_MODEL_PATH" value="$(find attachment_model)/models:$(find attachment_model)/../../../sim/models:$(env GAZEBO_MODEL_PATH)" />
+  <env name="GAZEBO_RESOURCE_PATH" value="$(find attachment_model)/../../../sim:$(env GAZEBO_RESOURCE_PATH)" />
+  
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find attachment_model)/worlds/attachment.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+    <arg name="verbose" value="true"/>
+  </include>
+
+  <!-- Child Robot Node -->
+  <node name="child_node"
+    pkg="attachment_model"
+    type="child_node.py"
+    output="screen" />
+  
+  <!-- Parent Robot Node -->
+  <node name="parent_node"
+    pkg="attachment_model"
+    type="parent_node.py"
+    output="screen" />
+
+  <!-- Central Attachment Controller -->
+  <node name="central_control"
+    pkg="attachment_model"
+    type="attachment_model_control.py"
+    output="screen" />
+
+  <!-- AprilTag Perception Node -->
+  <node name="tag_detection"
+    pkg="attachment_model"
+    type="perception.py"
+    output="screen" />
+ 
+  <!-- Camera recording node (streams and records /camera/image_raw/compressed) -->
+  <node name="camera_recording"
+    pkg="attachment_model"
+    type="camera_recording.py"
+    output="screen">
+    <param name="show" value="$(arg gui)" type="bool"/>
+  </node>
+
+  <!-- Ends the run after `duration` seconds and writes meta.json -->
+  <node name="experiment_timer"
+    pkg="attachment_model"
+    type="experiment_timer.py"
+    required="true"
+    output="screen">
+    <param name="duration" value="$(arg duration)" type="double"/>
+  </node>
+</launch>
