@@ -55,6 +55,28 @@ def odom_to_world(robot_name, x, y, yaw_deg):
     return [round(float(wx), 4), round(float(wy), 4), round(float((yaw_deg + np.degrees(yaw0)) % 360), 4)]
 
 
+DEFAULT_INITIAL = (-1.0, 1.0, -1.0, 1.0)   # (x_c, y_c, x_p, y_p) used by all earlier runs
+
+
+def initial_state(spec="", seed=-1):
+    """Starting needs (x_c, y_c, x_p, y_p) for a run.
+
+    spec: "" for the default (-1, 1, -1, 1), "random" for U(-1, 1) drawn from `seed`
+    (seed must be >= 0 so that every node computes the same state), or four numbers.
+    """
+    spec = str(spec).strip()
+    if not spec:
+        return DEFAULT_INITIAL
+    if spec == "random":
+        if int(seed) < 0:
+            raise ValueError("initial:=random needs seed >= 0")
+        return tuple(float(v) for v in np.random.default_rng(int(seed)).uniform(-1.0, 1.0, 4))
+    values = tuple(float(v) for v in spec.replace(",", " ").split())
+    if len(values) != 4:
+        raise ValueError(f"initial needs four numbers, got {spec!r}")
+    return values
+
+
 def data_root():
     """Return the package data directory, creating it if needed."""
     import os

@@ -51,10 +51,20 @@ class Run:
     parent_gt: np.ndarray = None
     child_odom: np.ndarray = None   # [T, 2] odometry path in the world frame (m)
     parent_odom: np.ndarray = None
+    controller: str = "decoupled"   # decoupled, coupled, observed, notebook; "legacy" for runs 0-33
+    distance_source: str = None     # gt or odom (observed and notebook controllers)
+    seed: int = -1
+    initial: tuple = (-1.0, 1.0, -1.0, 1.0)   # starting needs (x_c, y_c, x_p, y_p)
+    batch: str = ""
+    logs: dict = None               # controller logs {name: {key: array}}, from experiment_data_54 on
     arena_centre: tuple = ARENA_CENTRE
     arena_size: float = ARENA_SIZE
     box_size: float = BOX_SIZE
     meta: dict = field(default_factory=dict)
+
+    @property
+    def random_start(self):
+        return tuple(np.round(self.initial, 6)) != (-1.0, 1.0, -1.0, 1.0)
 
     @property
     def has_positions(self):
@@ -63,7 +73,7 @@ class Run:
     @property
     def diverged(self):
         """True if the oscillator model blew up during the run (needs are bounded near +/-1)."""
-        needs = np.concatenate((self.child_need, self.parent_need))
+        needs = np.concatenate((self.child_need, self.parent_need, self.child_acc, self.parent_acc))
         return bool(not np.isfinite(needs).all() or np.abs(needs).max() > 10)
 
     @property
@@ -139,7 +149,21 @@ def load_run(path):
         child_state=arr("child_states"), parent_state=arr("parent_states"),
         vocal_child=arr("vocal_child"), vocal_parent=arr("vocal_parent"),
         meta=meta,
+        controller=meta.get("controller", "legacy" if legacy else "decoupled"),
+        distance_source=meta.get("distance"),
+        seed=int(meta.get("seed", -1)),
+        initial=tuple(meta.get("initial", (-1.0, 1.0, -1.0, 1.0))),
+        batch=meta.get("batch", ""),
     )
+    logs = {}
+    for name in ("child", "parent", "central"):
+        log_file = os.path.join(path, f"controller_{name}.npy")
+        if os.path.exists(log_file):
+            log = np.load(log_file, allow_pickle=True).item()
+            # saved while the control thread may still append: cut every series to a common length
+            n_log = min(len(v) for k, v in log.items() if k != "meta")
+            logs[name] = {k: (v if k == "meta" else v[:n_log]) for k, v in log.items()}
+    run.logs = logs or None
 
     if "child_gt" in child and len(child["child_gt"]):
         # Positions of both robots come from the child's file so they share its clock

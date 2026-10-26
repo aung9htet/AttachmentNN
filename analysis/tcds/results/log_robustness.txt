@@ -1,0 +1,29 @@
+stability
+  decoupled break time (robot s), rows = size, cols = eps_Av:
+ [[893. 543. 488.]
+ [703. 420. 375.]
+ [511. 297. 276.]
+ [321. 188. 163.]
+ [ 17.  17.  18.]]
+  coupled: [[inf inf inf]
+ [inf inf inf]
+ [inf inf inf]
+ [inf inf inf]
+ [14. 14. 15.]]
+strips
+  coupled: 2040 runs, 25s
+  decoupled: 2040 runs, 256s
+  coupled: 2040 runs, 26s
+  decoupled: 2040 runs, 269s
+nets
+  decoupled: 840 runs, 108s
+  decoupled: 840 runs, 113s
+notebook
+  notebook ambivalent analytic: 6s
+  notebook ambivalent learned: 14s
+  notebook avoidant analytic: 5s
+  notebook avoidant learned: 27s
+grid
+  coupled: 8820 runs, 50s
+  decoupled: 8820 runs, 937s
+EXIT 0

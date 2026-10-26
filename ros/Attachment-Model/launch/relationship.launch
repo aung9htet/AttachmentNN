@@ -9,9 +9,24 @@
   <arg name="duration" default="0"/>
   <!-- Show the Gazebo client and the camera preview window -->
   <arg name="gui" default="true"/>
+  <!-- Controller: decoupled (default), coupled, observed, baseline, baseline-observed or notebook (see attachment_model_control.py) -->
+  <arg name="controller" default="decoupled"/>
+  <!-- Distance sensed in the observed, baseline-observed and notebook modes: gt (Gazebo ground truth) or odom -->
+  <arg name="distance" default="gt"/>
+  <!-- Run seed for the random exploration and random starting needs; -1 leaves both unseeded -->
+  <arg name="seed" default="-1"/>
+  <!-- Starting needs: empty for (-1 1 -1 1), "random" (needs seed >= 0) or four numbers -->
+  <arg name="initial" default=""/>
+  <!-- Free-text batch label stored in meta.json -->
+  <arg name="batch" default=""/>
 
   <param name="/attachment/avoidant" value="$(arg avoidant)" type="double"/>
   <param name="/attachment/ambivalent" value="$(arg ambivalent)" type="double"/>
+  <param name="/attachment/controller" value="$(arg controller)" type="str"/>
+  <param name="/attachment/distance" value="$(arg distance)" type="str"/>
+  <param name="/attachment/seed" value="$(arg seed)" type="int"/>
+  <param name="/attachment/initial" value="$(arg initial)" type="str"/>
+  <param name="/attachment/batch" value="$(arg batch)" type="str"/>
 
   <!-- Gazebo Simulation: world and arena from this package, MiRo model from the MDK -->
   <env name="GAZEBO_MODEL_PATH" value="$(find attachment_model)/models:$(find attachment_model)/../../../sim/models:$(env GAZEBO_MODEL_PATH)" />

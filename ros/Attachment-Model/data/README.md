@@ -25,3 +25,7 @@ Parameter sweep (Recorded 3 minutes per run):
 * Index 37 - 44: Avoidant 0.1 to 0.8, Ambivalent 0
 * Index 45 - 52: Avoidant 0, Ambivalent 0.1 to 0.8
 * Index 53: Avoidant 0, Ambivalent 0
+
+## Not in git
+
+For runs 54 onwards only `meta.json` (parameters, seed, controller, starting needs) is in git. The data arrays (`child_data.npy`, `parent_data.npy`, `controller_*.npy`, 1.0 GB) and the overhead videos (`camera_recording.mp4`, 4.6 GB) stay on the recording machine, to be archived outside git; see the repository `.gitignore`. The per-run measures computed from them are in `analysis/tcds/results` (`gazebo_runs.csv`, `run_checks.csv`, `numbers.json`). `experiments/run_batch.py` uses the files to tell finished runs from unfinished ones, so keep them in place when resuming a batch.

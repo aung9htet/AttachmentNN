@@ -357,6 +357,16 @@ Each figure is written as PNG and PDF.
 - Periods when the exploring child stays in one heat-map cell for longer than the mean plus two standard deviations are treated as stuck and excluded, as in the paper.
 - The three regimes are picked by parameter value (`REGIMES` in `make_figures.py`); the longest matching run is used.
 
+## TCDS paper
+
+`papers/tcds/` holds the narrative outline and the draft of the journal paper built on these
+experiments; `analysis/tcds/` holds the scripts behind it. They re-implement the attachment
+controllers outside ROS (`model.py`), read the trained `.pth` networks without PyTorch
+(`nnweights.py`), replay the recorded Gazebo runs, compare the coupled and decoupled
+controllers, evaluate the learned coupling in the notebook's agent simulator
+(`sim_agents.py`), and infer the attachment parameters from behaviour with a kinematic
+stand-in for the Gazebo experiment (`sim_kinematic.py`). See `papers/tcds/README.md`.
+
 ## Training the Neural Network
 
 After collecting experimental data, you can train neural networks to learn the coupling functions between parent and child behaviors.

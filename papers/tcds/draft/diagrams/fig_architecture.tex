@@ -1,0 +1,62 @@
+% Fig. 2: architecture of one robot's controller (the child), with the two design factors.
+% Compile with pdflatex.
+\documentclass[tikz,border=3pt]{standalone}
+\InputIfFileExists{common.tex}{}{\input{diagrams/common.tex}}
+\begin{document}
+\begin{tikzpicture}[font=\scriptsize]
+\def\xl{1.95} \def\xr{6.1} \def\bw{3.7cm}
+\tikzset{fnum/.style={circle, draw=ink, fill=white, inner sep=0.7pt, line width=0.5pt, font=\tiny\bfseries, text=ink},
+         factor/.style={draw=ink, fill=white, rounded corners=1.5pt, line width=0.5pt, inner sep=3pt,
+                        font=\scriptsize, text=ink, align=left, text width=7.6cm}}
+
+% ---------------------------------------------------------------- learned estimate
+\node[coup, minimum width=\bw, minimum height=1.05cm] (phip) at (\xl,0)
+  {\textbf{physical estimate} $\Phi_p$\\ in: distance, $x_c$, $y_c$, $\varepsilon_{Am}$; out: $d_p$};
+\node[coup, minimum width=\bw, minimum height=1.05cm] (phie) at (\xr,0)
+  {\textbf{emotional estimate} $\Phi_e$\\ in: calls, evidence, $x_c$, $y_c$, $\varepsilon_{Av}$; out: $d_e$};
+\node[fnum] at (phip.north west) {1};
+\node[fnum] at (phie.north west) {1};
+
+% ---------------------------------------------------------------- working model
+\node[osc=child, minimum width=3.0cm, minimum height=0.75cm] (own) at (\xl,-2.0) {own need $(x_c,\,y_c)$};
+\node[model=carer, minimum width=3.0cm, minimum height=0.75cm] (mod) at (\xr,-2.0) {partner model $(\hat{x}_p,\,\hat{y}_p)$};
+\node[fnum] at (mod.north east) {2};
+\draw[darr] (own) -- (mod);
+\coordinate (dtop) at ($(own.north)!0.5!(mod.north)+(0,0.36)$);
+\begin{scope}[on background layer]
+  \node[frame=muted, fit=(own)(mod)(dtop), inner xsep=5pt, inner ysep=4pt, fill=white] (dyad) {};
+\end{scope}
+\node[note, anchor=north, yshift=-1pt] at (dyad.north) {working model of the dyad (distance form), RK4 at 30\,Hz};
+
+\draw[arr] ([xshift=-6mm]phip.south) -- node[note, left=1pt] {$d_p$} ([xshift=-6mm]phip.south |- dyad.north);
+\draw[arr] ([xshift=-6mm]phie.south) -- node[note, left=1pt] {$d_e$} ([xshift=-6mm]phie.south |- dyad.north);
+\draw[arr] ([xshift=6mm]phip.south |- dyad.north) -- node[note, right=1pt] {$x_c, y_c, \hat{y}_p$} ([xshift=6mm]phip.south);
+\draw[arr] ([xshift=6mm]phie.south |- dyad.north) -- node[note, right=1pt] {$x_c, y_c$} ([xshift=6mm]phie.south);
+
+% ---------------------------------------------------------------- behaviours (readout of the own need)
+\node[box=child, fill=white, minimum width=\bw, minimum height=0.8cm, align=left] (app) at (\xl,-3.75)
+  {\textbf{approach} ($x_c>0$): steer to an AprilTag,\\ stop at 0.2\,m, call while a tag is in view};
+\node[box=child, fill=white, minimum width=\bw, minimum height=0.8cm, align=left] (exp) at (\xr,-3.75)
+  {\textbf{explore} ($x_c<0$): 0.2\,m/s random walk,\\ turn away from walls, silent};
+\draw[arr] (own.south |- dyad.south) -- (app.north);
+\draw[arr] (own.south |- dyad.south) -- ++(0,-0.25) -| (exp.north);
+
+% ---------------------------------------------------------------- body
+\node[plain, minimum width=7.85cm, minimum height=0.75cm] (body) at (4.025,-5.05) {};
+\robot{(0.75,-5.1)}{child}{}
+\node[note, text=ink, anchor=west] at (1.45,-4.9) {simulated MiRo in Gazebo: wheels, two cameras, sonar};
+\node[note, anchor=west] at (1.45,-5.2) {calls go to the caregiver on a simulated audio channel};
+\draw[arr] (app.south) -- (app.south |- body.north);
+\draw[arr] (exp.south) -- (exp.south |- body.north);
+
+% sensing path of the perceiving designs
+\draw[arr, dashed, draw=coupling] (body.west) -- ++(-0.35,0) |- node[note, pos=0.25, rotate=90, above=1pt, text=coupling] {distance, heard calls (perceiving)} (phip.west);
+\draw[arr, dashed, draw=coupling] ($(phip.west)+(-0.35,0)$) |- (4.025,0.8) -- (4.025,0) -- (phie.west);
+\node[note, text=coupling, anchor=south] at (2.0,0.8) {heard calls};
+
+% ---------------------------------------------------------------- the two design factors
+\node[factor, anchor=north] (key) at ($(body.south)+(0,-0.12)$)
+  {\tikz[baseline=-0.6ex]\node[fnum]{1}; \textbf{Perception.} \emph{Blind}: distance input is the gap $|y_c-\hat{y}_p|$ in the working model; calls silent. \emph{Perceiving}: sensed distance and heard calls.\\[1pt]
+   \tikz[baseline=-0.6ex]\node[fnum]{2}; \textbf{Partner model.} \emph{Self-propagated}: driven by the learned estimate. \emph{\mbox{Reference}}: driven by the coupling terms $\Phi$, Eq.~(4).};
+\end{tikzpicture}
+\end{document}

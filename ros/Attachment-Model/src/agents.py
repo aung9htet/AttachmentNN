@@ -15,10 +15,16 @@ class AttachmentAgent:
         General agent for attachment modelling
     """
     
-    def __init__(self, robot_name, model_separation):
+    def __init__(self, robot_name, model_separation=True):
         self.robot_name = robot_name
-        self.model_separation = model_separation
         rospy.init_node(f'{self.robot_name}_node')
+        # The coupled controller publishes both robots' actions on /central/controller
+        self.model_separation = rospy.get_param("/attachment/controller", "decoupled") != "coupled"
+        model_separation = self.model_separation
+        # Seed the random exploration (child: seed, caregiver: seed + 1) when a run seed is given
+        seed = int(rospy.get_param("/attachment/seed", -1))
+        if seed >= 0:
+            np.random.seed(seed + (0 if robot_name == "child" else 1))
         
         # Publishers
         self.state = rospy.Publisher(f"/{self.robot_name}/state", RobotPub, queue_size=10)
@@ -36,7 +42,8 @@ class AttachmentAgent:
             self.action_sub = ActionSubscriber(self.robot_name)
         else:
             self.action_sub = ActionSubscriber("central")
-        self.audio_detector = AudioSubscriber(self.robot_name)
+        # Listen to the partner's calls (the child listened to its own channel until audio_fix)
+        self.audio_detector = AudioSubscriber("parent" if self.robot_name == "child" else "child")
         
         # Behavior
         self.explorer = Explorer(self.robot_name)

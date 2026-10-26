@@ -1,0 +1,231 @@
+[18:37:35] 114 runs to do (0 already done), ~66 min with 6 workers; output /home/aung-htet/Work/AttachmentNN/ros/Attachment-Model/data
+[18:37:35] w1 start E6a_baseline_av0.0_am0.0_r1
+[18:37:35] w3 start E6a_baseline_av0.0_am0.0_r2
+[18:37:35] w2 start E6a_baseline_av0.0_am0.0_r3
+[18:37:35] w0 start E6a_baseline_av0.1_am0.0_r1
+[18:37:35] w5 start E6a_baseline_av0.1_am0.0_r2
+[18:37:35] w4 start E6a_baseline_av0.1_am0.0_r3
+[18:40:48] w0 ok   E6a_baseline_av0.1_am0.0_r1: 180s recorded, real-time factor 0.98 -> experiment_data_497
+[18:40:48] w0 start E6a_baseline_av0.2_am0.0_r1
+[18:40:49] w4 ok   E6a_baseline_av0.1_am0.0_r3: 180s recorded, real-time factor 0.98 -> experiment_data_498
+[18:40:49] w4 start E6a_baseline_av0.2_am0.0_r2
+[18:40:51] w2 ok   E6a_baseline_av0.0_am0.0_r3: 180s recorded, real-time factor 0.96 -> experiment_data_499
+[18:40:51] w2 start E6a_baseline_av0.2_am0.0_r3
+[18:40:53] w1 ok   E6a_baseline_av0.0_am0.0_r1: 180s recorded, real-time factor 0.95 -> experiment_data_500
+[18:40:53] w1 start E6a_baseline_av0.3_am0.0_r1
+[18:40:53] w5 ok   E6a_baseline_av0.1_am0.0_r2: 180s recorded, real-time factor 0.95 -> experiment_data_501
+[18:40:53] w5 start E6a_baseline_av0.3_am0.0_r2
+[18:40:56] w3 ok   E6a_baseline_av0.0_am0.0_r2: 180s recorded, real-time factor 0.94 -> experiment_data_502
+[18:40:56] w3 start E6a_baseline_av0.3_am0.0_r3
+[18:43:59] w0 ok   E6a_baseline_av0.2_am0.0_r1: 180s recorded, real-time factor 0.98 -> experiment_data_503
+[18:43:59] w0 start E6a_baseline_av0.4_am0.0_r1
+[18:44:03] w2 ok   E6a_baseline_av0.2_am0.0_r3: 180s recorded, real-time factor 0.98 -> experiment_data_504
+[18:44:03] w2 start E6a_baseline_av0.4_am0.0_r2
+[18:44:04] w1 ok   E6a_baseline_av0.3_am0.0_r1: 180s recorded, real-time factor 0.98 -> experiment_data_505
+[18:44:04] w1 start E6a_baseline_av0.4_am0.0_r3
+[18:44:04] w4 ok   E6a_baseline_av0.2_am0.0_r2: 180s recorded, real-time factor 0.96 -> experiment_data_506
+[18:44:04] w4 start E6a_baseline_av0.5_am0.0_r1
+[18:44:05] w5 ok   E6a_baseline_av0.3_am0.0_r2: 180s recorded, real-time factor 0.98 -> experiment_data_507
+[18:44:05] w5 start E6a_baseline_av0.5_am0.0_r2
+[18:44:10] w3 ok   E6a_baseline_av0.3_am0.0_r3: 180s recorded, real-time factor 0.97 -> experiment_data_508
+[18:44:10] w3 start E6a_baseline_av0.5_am0.0_r3
+[18:47:11] w0 ok   E6a_baseline_av0.4_am0.0_r1: 180s recorded, real-time factor 0.98 -> experiment_data_509
+[18:47:11] w0 start E6a_baseline_av0.6_am0.0_r1
+[18:47:15] w1 ok   E6a_baseline_av0.4_am0.0_r3: 180s recorded, real-time factor 0.98 -> experiment_data_510
+[18:47:15] w1 start E6a_baseline_av0.6_am0.0_r2
+[18:47:17] w5 ok   E6a_baseline_av0.5_am0.0_r2: 180s recorded, real-time factor 0.97 -> experiment_data_511
+[18:47:17] w5 start E6a_baseline_av0.6_am0.0_r3
+[18:47:18] w2 ok   E6a_baseline_av0.4_am0.0_r2: 180s recorded, real-time factor 0.96 -> experiment_data_512
+[18:47:18] w2 start E6a_baseline_av0.7_am0.0_r1
+[18:47:21] w3 ok   E6a_baseline_av0.5_am0.0_r3: 180s recorded, real-time factor 0.98 -> experiment_data_513
+[18:47:21] w3 start E6a_baseline_av0.7_am0.0_r2
+[18:47:44] w4 ok   E6a_baseline_av0.5_am0.0_r1: 180s recorded, real-time factor 0.85 -> experiment_data_514
+[18:47:44] w4 start E6a_baseline_av0.7_am0.0_r3
+[18:50:27] w5 ok   E6a_baseline_av0.6_am0.0_r3: 180s recorded, real-time factor 0.99 -> experiment_data_515
+[18:50:27] w5 start E6a_baseline_av0.8_am0.0_r1
+[18:50:28] w1 ok   E6a_baseline_av0.6_am0.0_r2: 180s recorded, real-time factor 0.97 -> experiment_data_516
+[18:50:28] w1 start E6a_baseline_av0.8_am0.0_r2
+[18:50:28] w2 ok   E6a_baseline_av0.7_am0.0_r1: 180s recorded, real-time factor 0.99 -> experiment_data_517
+[18:50:28] w2 start E6a_baseline_av0.8_am0.0_r3
+[18:50:32] w0 ok   E6a_baseline_av0.6_am0.0_r1: 180s recorded, real-time factor 0.93 -> experiment_data_518
+[18:50:32] w0 start E6a_baseline_av0.9_am0.0_r1
+[18:50:32] w3 ok   E6a_baseline_av0.7_am0.0_r2: 180s recorded, real-time factor 0.98 -> experiment_data_519
+[18:50:32] w3 start E6a_baseline_av0.9_am0.0_r2
+[18:50:54] w4 ok   E6a_baseline_av0.7_am0.0_r3: 180s recorded, real-time factor 0.99 -> experiment_data_520
+[18:50:54] w4 start E6a_baseline_av0.9_am0.0_r3
+[18:53:38] w2 ok   E6a_baseline_av0.8_am0.0_r3: 180s recorded, real-time factor 0.99 -> experiment_data_521
+[18:53:38] w2 start E6a_baseline_av0.0_am0.1_r1
+[18:53:40] w1 ok   E6a_baseline_av0.8_am0.0_r2: 180s recorded, real-time factor 0.97 -> experiment_data_522
+[18:53:40] w1 start E6a_baseline_av0.0_am0.1_r2
+[18:53:41] w5 ok   E6a_baseline_av0.8_am0.0_r1: 180s recorded, real-time factor 0.97 -> experiment_data_523
+[18:53:41] w5 start E6a_baseline_av0.0_am0.1_r3
+[18:53:42] w0 ok   E6a_baseline_av0.9_am0.0_r1: 180s recorded, real-time factor 0.98 -> experiment_data_524
+[18:53:42] w0 start E6a_baseline_av0.0_am0.2_r1
+[18:53:44] w3 ok   E6a_baseline_av0.9_am0.0_r2: 180s recorded, real-time factor 0.97 -> experiment_data_525
+[18:53:44] w3 start E6a_baseline_av0.0_am0.2_r2
+[18:54:05] w4 ok   E6a_baseline_av0.9_am0.0_r3: 180s recorded, real-time factor 0.99 -> experiment_data_526
+[18:54:05] w4 start E6a_baseline_av0.0_am0.2_r3
+[18:56:48] w2 ok   E6a_baseline_av0.0_am0.1_r1: 180s recorded, real-time factor 0.99 -> experiment_data_527
+[18:56:48] w2 start E6a_baseline_av0.0_am0.3_r1
+[18:56:51] w5 ok   E6a_baseline_av0.0_am0.1_r3: 180s recorded, real-time factor 0.99 -> experiment_data_528
+[18:56:51] w5 start E6a_baseline_av0.0_am0.3_r2
+[18:56:52] w1 ok   E6a_baseline_av0.0_am0.1_r2: 180s recorded, real-time factor 0.98 -> experiment_data_529
+[18:56:52] w1 start E6a_baseline_av0.0_am0.3_r3
+[18:56:52] w0 ok   E6a_baseline_av0.0_am0.2_r1: 180s recorded, real-time factor 0.98 -> experiment_data_530
+[18:56:52] w0 start E6a_baseline_av0.0_am0.4_r1
+[18:56:57] w3 ok   E6a_baseline_av0.0_am0.2_r2: 180s recorded, real-time factor 0.97 -> experiment_data_531
+[18:56:57] w3 start E6a_baseline_av0.0_am0.4_r2
+[18:57:19] w4 ok   E6a_baseline_av0.0_am0.2_r3: 180s recorded, real-time factor 0.96 -> experiment_data_532
+[18:57:19] w4 start E6a_baseline_av0.0_am0.4_r3
+[19:00:02] w1 ok   E6a_baseline_av0.0_am0.3_r3: 180s recorded, real-time factor 0.99 -> experiment_data_533
+[19:00:02] w1 start E6a_baseline_av0.0_am0.5_r1
+[19:00:04] w5 ok   E6a_baseline_av0.0_am0.3_r2: 180s recorded, real-time factor 0.98 -> experiment_data_534
+[19:00:04] w5 start E6a_baseline_av0.0_am0.5_r2
+[19:00:05] w2 ok   E6a_baseline_av0.0_am0.3_r1: 180s recorded, real-time factor 0.96 -> experiment_data_535
+[19:00:05] w2 start E6a_baseline_av0.0_am0.5_r3
+[19:00:11] w0 ok   E6a_baseline_av0.0_am0.4_r1: 180s recorded, real-time factor 0.94 -> experiment_data_536
+[19:00:11] w0 start E6a_baseline_av0.0_am0.6_r1
+[19:00:13] w3 ok   E6a_baseline_av0.0_am0.4_r2: 180s recorded, real-time factor 0.96 -> experiment_data_537
+[19:00:13] w3 start E6a_baseline_av0.0_am0.6_r2
+[19:00:30] w4 ok   E6a_baseline_av0.0_am0.4_r3: 180s recorded, real-time factor 0.99 -> experiment_data_538
+[19:00:30] w4 start E6a_baseline_av0.0_am0.6_r3
+[19:03:14] w1 ok   E6a_baseline_av0.0_am0.5_r1: 180s recorded, real-time factor 0.97 -> experiment_data_539
+[19:03:14] w1 start E6a_baseline_av0.0_am0.7_r1
+[19:03:16] w2 ok   E6a_baseline_av0.0_am0.5_r3: 180s recorded, real-time factor 0.98 -> experiment_data_540
+[19:03:16] w2 start E6a_baseline_av0.0_am0.7_r2
+[19:03:17] w5 ok   E6a_baseline_av0.0_am0.5_r2: 180s recorded, real-time factor 0.97 -> experiment_data_541
+[19:03:17] w5 start E6a_baseline_av0.0_am0.7_r3
+[19:03:21] w0 ok   E6a_baseline_av0.0_am0.6_r1: 180s recorded, real-time factor 0.99 -> experiment_data_542
+[19:03:21] w0 start E6a_baseline_av0.0_am0.8_r1
+[19:03:30] w3 ok   E6a_baseline_av0.0_am0.6_r2: 180s recorded, real-time factor 0.95 -> experiment_data_543
+[19:03:30] w3 start E6a_baseline_av0.0_am0.8_r2
+[19:03:40] w4 ok   E6a_baseline_av0.0_am0.6_r3: 180s recorded, real-time factor 0.99 -> experiment_data_544
+[19:03:40] w4 start E6a_baseline_av0.0_am0.8_r3
+[19:06:25] w1 ok   E6a_baseline_av0.0_am0.7_r1: 180s recorded, real-time factor 0.98 -> experiment_data_545
+[19:06:25] w1 start E6a_baseline_av0.0_am0.9_r1
+[19:06:27] w5 ok   E6a_baseline_av0.0_am0.7_r3: 180s recorded, real-time factor 0.98 -> experiment_data_546
+[19:06:27] w5 start E6a_baseline_av0.0_am0.9_r2
+[19:06:28] w2 ok   E6a_baseline_av0.0_am0.7_r2: 180s recorded, real-time factor 0.98 -> experiment_data_547
+[19:06:28] w2 start E6a_baseline_av0.0_am0.9_r3
+[19:06:34] w0 ok   E6a_baseline_av0.0_am0.8_r1: 180s recorded, real-time factor 0.97 -> experiment_data_548
+[19:06:34] w0 start E6b_baseline-observed-gt_av0.0_am0.0_r1
+[19:06:42] w3 ok   E6a_baseline_av0.0_am0.8_r2: 180s recorded, real-time factor 0.98 -> experiment_data_549
+[19:06:42] w3 start E6b_baseline-observed-gt_av0.0_am0.0_r2
+[19:06:51] w4 ok   E6a_baseline_av0.0_am0.8_r3: 180s recorded, real-time factor 0.98 -> experiment_data_550
+[19:06:51] w4 start E6b_baseline-observed-gt_av0.0_am0.0_r3
+[19:09:35] w1 ok   E6a_baseline_av0.0_am0.9_r1: 180s recorded, real-time factor 0.98 -> experiment_data_551
+[19:09:35] w1 start E6b_baseline-observed-gt_av0.1_am0.0_r1
+[19:09:38] w2 ok   E6a_baseline_av0.0_am0.9_r3: 180s recorded, real-time factor 0.99 -> experiment_data_552
+[19:09:38] w2 start E6b_baseline-observed-gt_av0.1_am0.0_r2
+[19:09:40] w5 ok   E6a_baseline_av0.0_am0.9_r2: 180s recorded, real-time factor 0.97 -> experiment_data_553
+[19:09:40] w5 start E6b_baseline-observed-gt_av0.1_am0.0_r3
+[19:09:45] w0 ok   E6b_baseline-observed-gt_av0.0_am0.0_r1: 180s recorded, real-time factor 0.98 -> experiment_data_554
+[19:09:45] w0 start E6b_baseline-observed-gt_av0.2_am0.0_r1
+[19:09:55] w3 ok   E6b_baseline-observed-gt_av0.0_am0.0_r2: 180s recorded, real-time factor 0.97 -> experiment_data_555
+[19:09:55] w3 start E6b_baseline-observed-gt_av0.2_am0.0_r2
+[19:10:04] w4 ok   E6b_baseline-observed-gt_av0.0_am0.0_r3: 180s recorded, real-time factor 0.98 -> experiment_data_556
+[19:10:04] w4 start E6b_baseline-observed-gt_av0.2_am0.0_r3
+[19:12:46] w1 ok   E6b_baseline-observed-gt_av0.1_am0.0_r1: 180s recorded, real-time factor 0.98 -> experiment_data_557
+[19:12:46] w1 start E6b_baseline-observed-gt_av0.3_am0.0_r1
+[19:12:50] w2 ok   E6b_baseline-observed-gt_av0.1_am0.0_r2: 180s recorded, real-time factor 0.98 -> experiment_data_558
+[19:12:50] w2 start E6b_baseline-observed-gt_av0.3_am0.0_r2
+[19:12:51] w5 ok   E6b_baseline-observed-gt_av0.1_am0.0_r3: 180s recorded, real-time factor 0.98 -> experiment_data_559
+[19:12:51] w5 start E6b_baseline-observed-gt_av0.3_am0.0_r3
+[19:13:14] w4 ok   E6b_baseline-observed-gt_av0.2_am0.0_r3: 180s recorded, real-time factor 0.99 -> experiment_data_560
+[19:13:14] w4 start E6b_baseline-observed-gt_av0.4_am0.0_r1
+[19:13:14] w0 ok   E6b_baseline-observed-gt_av0.2_am0.0_r1: 180s recorded, real-time factor 0.90 -> experiment_data_561
+[19:13:14] w0 start E6b_baseline-observed-gt_av0.4_am0.0_r2
+[19:13:34] w3 ok   E6b_baseline-observed-gt_av0.2_am0.0_r2: 180s recorded, real-time factor 0.85 -> experiment_data_562
+[19:13:34] w3 start E6b_baseline-observed-gt_av0.4_am0.0_r3
+[19:15:56] w1 ok   E6b_baseline-observed-gt_av0.3_am0.0_r1: 180s recorded, real-time factor 0.99 -> experiment_data_563
+[19:15:56] w1 start E6b_baseline-observed-gt_av0.5_am0.0_r1
+[19:16:01] w2 ok   E6b_baseline-observed-gt_av0.3_am0.0_r2: 180s recorded, real-time factor 0.98 -> experiment_data_564
+[19:16:01] w2 start E6b_baseline-observed-gt_av0.5_am0.0_r2
+[19:16:23] w4 ok   E6b_baseline-observed-gt_av0.4_am0.0_r1: 180s recorded, real-time factor 0.99 -> experiment_data_565
+[19:16:23] w4 start E6b_baseline-observed-gt_av0.5_am0.0_r3
+[19:16:25] w5 ok   E6b_baseline-observed-gt_av0.3_am0.0_r3: 180s recorded, real-time factor 0.87 -> experiment_data_566
+[19:16:25] w5 start E6b_baseline-observed-gt_av0.6_am0.0_r1
+[19:16:25] w0 ok   E6b_baseline-observed-gt_av0.4_am0.0_r2: 180s recorded, real-time factor 0.98 -> experiment_data_567
+[19:16:25] w0 start E6b_baseline-observed-gt_av0.6_am0.0_r2
+[19:16:44] w3 ok   E6b_baseline-observed-gt_av0.4_am0.0_r3: 180s recorded, real-time factor 0.99 -> experiment_data_568
+[19:16:44] w3 start E6b_baseline-observed-gt_av0.6_am0.0_r3
+[19:19:12] w1 ok   E6b_baseline-observed-gt_av0.5_am0.0_r1: 180s recorded, real-time factor 0.95 -> experiment_data_569
+[19:19:12] w1 start E6b_baseline-observed-gt_av0.7_am0.0_r1
+[19:19:33] w4 ok   E6b_baseline-observed-gt_av0.5_am0.0_r3: 180s recorded, real-time factor 0.99 -> experiment_data_570
+[19:19:33] w4 start E6b_baseline-observed-gt_av0.7_am0.0_r2
+[19:19:34] w5 ok   E6b_baseline-observed-gt_av0.6_am0.0_r1: 180s recorded, real-time factor 0.99 -> experiment_data_571
+[19:19:34] w5 start E6b_baseline-observed-gt_av0.7_am0.0_r3
+[19:19:46] w2 ok   E6b_baseline-observed-gt_av0.5_am0.0_r2: 180s recorded, real-time factor 0.83 -> experiment_data_572
+[19:19:46] w2 start E6b_baseline-observed-gt_av0.8_am0.0_r1
+[19:19:49] w0 ok   E6b_baseline-observed-gt_av0.6_am0.0_r2: 180s recorded, real-time factor 0.92 -> experiment_data_573
+[19:19:49] w0 start E6b_baseline-observed-gt_av0.8_am0.0_r2
+[19:19:54] w3 ok   E6b_baseline-observed-gt_av0.6_am0.0_r3: 180s recorded, real-time factor 0.99 -> experiment_data_574
+[19:19:54] w3 start E6b_baseline-observed-gt_av0.8_am0.0_r3
+[19:22:25] w1 ok   E6b_baseline-observed-gt_av0.7_am0.0_r1: 180s recorded, real-time factor 0.97 -> experiment_data_575
+[19:22:25] w1 start E6b_baseline-observed-gt_av0.9_am0.0_r1
+[19:22:45] w5 ok   E6b_baseline-observed-gt_av0.7_am0.0_r3: 180s recorded, real-time factor 0.98 -> experiment_data_576
+[19:22:45] w5 start E6b_baseline-observed-gt_av0.9_am0.0_r2
+[19:23:00] w2 ok   E6b_baseline-observed-gt_av0.8_am0.0_r1: 180s recorded, real-time factor 0.97 -> experiment_data_577
+[19:23:00] w2 start E6b_baseline-observed-gt_av0.9_am0.0_r3
+[19:23:01] w4 ok   E6b_baseline-observed-gt_av0.7_am0.0_r2: 180s recorded, real-time factor 0.90 -> experiment_data_578
+[19:23:01] w4 start E6b_baseline-observed-gt_av0.0_am0.1_r1
+[19:23:04] w0 ok   E6b_baseline-observed-gt_av0.8_am0.0_r2: 180s recorded, real-time factor 0.96 -> experiment_data_579
+[19:23:04] w0 start E6b_baseline-observed-gt_av0.0_am0.1_r2
+[19:23:04] w3 ok   E6b_baseline-observed-gt_av0.8_am0.0_r3: 180s recorded, real-time factor 0.99 -> experiment_data_580
+[19:23:04] w3 start E6b_baseline-observed-gt_av0.0_am0.1_r3
+[19:25:38] w1 ok   E6b_baseline-observed-gt_av0.9_am0.0_r1: 180s recorded, real-time factor 0.97 -> experiment_data_581
+[19:25:38] w1 start E6b_baseline-observed-gt_av0.0_am0.2_r1
+[19:26:08] w5 ok   E6b_baseline-observed-gt_av0.9_am0.0_r2: 180s recorded, real-time factor 0.92 -> experiment_data_582
+[19:26:08] w5 start E6b_baseline-observed-gt_av0.0_am0.2_r2
+[19:26:10] w2 ok   E6b_baseline-observed-gt_av0.9_am0.0_r3: 180s recorded, real-time factor 0.99 -> experiment_data_583
+[19:26:10] w2 start E6b_baseline-observed-gt_av0.0_am0.2_r3
+[19:26:13] w4 ok   E6b_baseline-observed-gt_av0.0_am0.1_r1: 180s recorded, real-time factor 0.98 -> experiment_data_584
+[19:26:13] w4 start E6b_baseline-observed-gt_av0.0_am0.3_r1
+[19:26:16] w3 ok   E6b_baseline-observed-gt_av0.0_am0.1_r3: 180s recorded, real-time factor 0.98 -> experiment_data_585
+[19:26:16] w3 start E6b_baseline-observed-gt_av0.0_am0.3_r2
+[19:26:19] w0 ok   E6b_baseline-observed-gt_av0.0_am0.1_r2: 180s recorded, real-time factor 0.96 -> experiment_data_586
+[19:26:19] w0 start E6b_baseline-observed-gt_av0.0_am0.3_r3
+[19:28:50] w1 ok   E6b_baseline-observed-gt_av0.0_am0.2_r1: 180s recorded, real-time factor 0.98 -> experiment_data_587
+[19:28:50] w1 start E6b_baseline-observed-gt_av0.0_am0.4_r1
+[19:29:21] w5 ok   E6b_baseline-observed-gt_av0.0_am0.2_r2: 180s recorded, real-time factor 0.97 -> experiment_data_588
+[19:29:21] w5 start E6b_baseline-observed-gt_av0.0_am0.4_r2
+[19:29:23] w2 ok   E6b_baseline-observed-gt_av0.0_am0.2_r3: 180s recorded, real-time factor 0.97 -> experiment_data_589
+[19:29:23] w2 start E6b_baseline-observed-gt_av0.0_am0.4_r3
+[19:29:24] w4 ok   E6b_baseline-observed-gt_av0.0_am0.3_r1: 180s recorded, real-time factor 0.98 -> experiment_data_590
+[19:29:24] w4 start E6b_baseline-observed-gt_av0.0_am0.5_r1
+[19:29:30] w0 ok   E6b_baseline-observed-gt_av0.0_am0.3_r3: 180s recorded, real-time factor 0.98 -> experiment_data_591
+[19:29:30] w0 start E6b_baseline-observed-gt_av0.0_am0.5_r2
+[19:29:32] w3 ok   E6b_baseline-observed-gt_av0.0_am0.3_r2: 180s recorded, real-time factor 0.96 -> experiment_data_592
+[19:29:32] w3 start E6b_baseline-observed-gt_av0.0_am0.5_r3
+[19:32:06] w1 ok   E6b_baseline-observed-gt_av0.0_am0.4_r1: 180s recorded, real-time factor 0.96 -> experiment_data_593
+[19:32:06] w1 start E6b_baseline-observed-gt_av0.0_am0.6_r1
+[19:32:36] w4 ok   E6b_baseline-observed-gt_av0.0_am0.5_r1: 180s recorded, real-time factor 0.98 -> experiment_data_594
+[19:32:36] w4 start E6b_baseline-observed-gt_av0.0_am0.6_r2
+[19:32:38] w2 ok   E6b_baseline-observed-gt_av0.0_am0.4_r3: 180s recorded, real-time factor 0.96 -> experiment_data_595
+[19:32:38] w2 start E6b_baseline-observed-gt_av0.0_am0.6_r3
+[19:32:40] w5 ok   E6b_baseline-observed-gt_av0.0_am0.4_r2: 180s recorded, real-time factor 0.94 -> experiment_data_596
+[19:32:40] w5 start E6b_baseline-observed-gt_av0.0_am0.7_r1
+[19:32:44] w3 ok   E6b_baseline-observed-gt_av0.0_am0.5_r3: 180s recorded, real-time factor 0.97 -> experiment_data_597
+[19:32:44] w3 start E6b_baseline-observed-gt_av0.0_am0.7_r2
+[19:32:47] w0 ok   E6b_baseline-observed-gt_av0.0_am0.5_r2: 180s recorded, real-time factor 0.95 -> experiment_data_598
+[19:32:47] w0 start E6b_baseline-observed-gt_av0.0_am0.7_r3
+[19:35:19] w1 ok   E6b_baseline-observed-gt_av0.0_am0.6_r1: 180s recorded, real-time factor 0.97 -> experiment_data_599
+[19:35:19] w1 start E6b_baseline-observed-gt_av0.0_am0.8_r1
+[19:35:48] w4 ok   E6b_baseline-observed-gt_av0.0_am0.6_r2: 180s recorded, real-time factor 0.98 -> experiment_data_600
+[19:35:48] w4 start E6b_baseline-observed-gt_av0.0_am0.8_r2
+[19:35:49] w2 ok   E6b_baseline-observed-gt_av0.0_am0.6_r3: 180s recorded, real-time factor 0.98 -> experiment_data_601
+[19:35:49] w2 start E6b_baseline-observed-gt_av0.0_am0.8_r3
+[19:35:52] w5 ok   E6b_baseline-observed-gt_av0.0_am0.7_r1: 180s recorded, real-time factor 0.97 -> experiment_data_602
+[19:35:52] w5 start E6b_baseline-observed-gt_av0.0_am0.9_r1
+[19:36:00] w0 ok   E6b_baseline-observed-gt_av0.0_am0.7_r3: 180s recorded, real-time factor 0.97 -> experiment_data_603
+[19:36:00] w0 start E6b_baseline-observed-gt_av0.0_am0.9_r2
+[19:36:01] w3 ok   E6b_baseline-observed-gt_av0.0_am0.7_r2: 180s recorded, real-time factor 0.95 -> experiment_data_604
+[19:36:01] w3 start E6b_baseline-observed-gt_av0.0_am0.9_r3
+[19:38:30] w1 ok   E6b_baseline-observed-gt_av0.0_am0.8_r1: 180s recorded, real-time factor 0.98 -> experiment_data_605
+[19:38:59] w2 ok   E6b_baseline-observed-gt_av0.0_am0.8_r3: 180s recorded, real-time factor 0.98 -> experiment_data_606
+[19:39:01] w4 ok   E6b_baseline-observed-gt_av0.0_am0.8_r2: 180s recorded, real-time factor 0.97 -> experiment_data_607
+[19:39:02] w5 ok   E6b_baseline-observed-gt_av0.0_am0.9_r1: 180s recorded, real-time factor 0.98 -> experiment_data_608
+[19:39:11] w3 ok   E6b_baseline-observed-gt_av0.0_am0.9_r3: 180s recorded, real-time factor 0.99 -> experiment_data_609
+[19:39:14] w0 ok   E6b_baseline-observed-gt_av0.0_am0.9_r2: 180s recorded, real-time factor 0.97 -> experiment_data_610
+[19:39:14] batch finished
+EXIT 0

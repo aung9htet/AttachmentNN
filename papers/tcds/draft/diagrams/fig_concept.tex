@@ -1,0 +1,103 @@
+% Fig. 1: shared needs -> private working models -> anchored partner models. Compile with pdflatex.
+\documentclass[tikz,border=3pt]{standalone}
+\InputIfFileExists{common.tex}{}{\input{diagrams/common.tex}}
+\begin{document}
+\begin{tikzpicture}[font=\scriptsize]
+\tikzset{
+  ag/.style={box=#1, minimum width=2.35cm, minimum height=0.72cm, inner sep=2pt},
+  agm/.style={ag=#1, dashed, fill=#1!4},
+  est/.style={box=coupling, minimum width=2.35cm, minimum height=0.5cm, inner sep=2pt},
+  sarr/.style={{Stealth[length=1.3mm]}-{Stealth[length=1.3mm]}, line width=0.6pt, draw=muted},
+  oarr/.style={-{Stealth[length=1.3mm]}, line width=0.6pt, draw=muted},
+  outcome/.style={font=\scriptsize, text=ink, align=center, text width=#1},
+}
+
+% ============================================================ (a) shared needs
+\node[ptitle] at (0,5.55) {(a) Coupled oscillators};
+\node[ag=child, minimum width=1.75cm] (ac) at (0.9,3.55) {child\\need $(x_c,y_c)$};
+\node[ag=carer, minimum width=1.75cm] (ap) at (3.75,3.55) {caregiver\\need $(x_p,y_p)$};
+\draw[sarr] ([yshift=5pt]ac.east) -- node[note, above=0pt] {$\varepsilon_{Am}$} ([yshift=5pt]ap.west);
+\draw[sarr] ([yshift=-5pt]ac.east) -- node[note, below=0pt] {$\varepsilon_{Av}$} ([yshift=-5pt]ap.west);
+\coordinate (atop) at (2.325,4.55);
+\begin{scope}[on background layer]
+  \node[frame=muted, fit=(ac)(ap)(atop), inner xsep=4pt, inner ysep=5pt] (actrl) {};
+\end{scope}
+\node[note, anchor=north, yshift=-1pt] at (actrl.north) {coupling terms $\Phi_p,\Phi_e$ read both needs};
+\node[note, anchor=south, yshift=1pt] at (actrl.north) {ungrounded: nothing has to be sensed};
+\robot{(0.9,0.95)}{child}{child robot}
+\robot{(3.75,0.95)}{carer}{caregiver robot}
+\draw[oarr] (ac.south |- actrl.south) -- (0.9,1.42);
+\draw[oarr] (ap.south |- actrl.south) -- (3.75,1.42);
+\node[outcome=4.6cm, anchor=north] at (2.325,0.05)
+  {\textbf{coordinated}: synchrony under avoidance,\\anti-synchrony under ambivalence};
+
+% ============================================================ (b) private working models
+\begin{scope}[xshift=5.05cm]
+\node[ptitle] at (0,5.55) {(b) Estimation-coupled, private};
+% child robot's working model
+\node[ag=child]  (bco) at (1.35,4.05) {own need $(x_c,y_c)$};
+\node[est]       (bce) at (1.35,3.2)  {estimate $\Phi$ (blind)};
+\node[agm=carer] (bcm) at (1.35,2.35) {model of caregiver\\$(\hat{x}_p,\hat{y}_p)$};
+\draw[sarr] (bco) -- (bce); \draw[sarr] (bce) -- (bcm);
+\begin{scope}[on background layer]
+  \node[frame=child, fit=(bco)(bce)(bcm), inner sep=3pt] (bcf) {};
+\end{scope}
+% caregiver robot's working model
+\node[ag=carer]  (bpo) at (5.05,4.05) {own need $(x_p,y_p)$};
+\node[est]       (bpe) at (5.05,3.2)  {estimate $\Phi$ (blind)};
+\node[agm=child] (bpm) at (5.05,2.35) {model of child\\$(\hat{x}_c,\hat{y}_c)$};
+\draw[sarr] (bpo) -- (bpe); \draw[sarr] (bpe) -- (bpm);
+\begin{scope}[on background layer]
+  \node[frame=carer, fit=(bpo)(bpe)(bpm), inner sep=3pt] (bpf) {};
+\end{scope}
+\node[font=\scriptsize\bfseries, text=child, anchor=south] at (bcf.north) {child's working model};
+\node[font=\scriptsize\bfseries, text=carer, anchor=south] at (bpf.north) {caregiver's working model};
+% the needs are private
+\draw[faint, dashed, line width=0.6pt] (bcf.east |- bco) -- (bpf.west |- bco);
+\node[text=muted, font=\small] at ($(bcf.east |- bco)!0.5!(bpf.west |- bco)$) {$\times$};
+\node[note] at ($(bcf.east |- bce)!0.5!(bpf.west |- bce)$) {needs\\private};
+\robot{(1.35,0.95)}{child}{child robot}
+\robot{(5.05,0.95)}{carer}{caregiver robot}
+\draw[oarr] (bcf.south) -- (1.35,1.42);
+\draw[oarr] (bpf.south) -- (5.05,1.42);
+\draw[sarr] (2.15,1.0) -- node[note, above=0pt] {behaviour only:\\approach, calls} (4.25,1.0);
+\node[outcome=6.3cm, anchor=north] at (3.2,0.05)
+  {\textbf{belief without coordination}: each model stays locked\\to its owner, but the two robots' needs drift apart};
+\end{scope}
+
+% ============================================================ (c) anchored partner models
+\begin{scope}[xshift=11.95cm]
+\node[ptitle] at (0,5.55) {(c) Estimation-coupled, anchored};
+\node[ag=child]  (cco) at (1.35,4.05) {own need $(x_c,y_c)$};
+\node[est, minimum width=1.75cm, minimum height=0.62cm, align=center] (cce) at (1.65,3.15) {estimate $\Phi$\\(perceiving)};
+\node[agm=carer] (ccm) at (1.35,2.25) {reference model\\of caregiver};
+\draw[oarr] (cce) -- (cce |- cco.south);
+\draw[sarr] ([xshift=3.5mm]cco.south west) -- ([xshift=3.5mm]ccm.north west);
+\begin{scope}[on background layer]
+  \node[frame=child, fit=(cco)(cce)(ccm), inner sep=3pt] (ccf) {};
+\end{scope}
+\node[ag=carer]  (cpo) at (5.05,4.05) {own need $(x_p,y_p)$};
+\node[est, minimum width=1.75cm, minimum height=0.62cm, align=center] (cpe) at (4.75,3.15) {estimate $\Phi$\\(perceiving)};
+\node[agm=child] (cpm) at (5.05,2.25) {reference model\\of child};
+\draw[oarr] (cpe) -- (cpe |- cpo.south);
+\draw[sarr] ([xshift=-3.5mm]cpo.south east) -- ([xshift=-3.5mm]cpm.north east);
+\begin{scope}[on background layer]
+  \node[frame=carer, fit=(cpo)(cpe)(cpm), inner sep=3pt] (cpf) {};
+\end{scope}
+\node[font=\scriptsize\bfseries, text=child, anchor=south] at (ccf.north) {child's working model};
+\node[font=\scriptsize\bfseries, text=carer, anchor=south] at (cpf.north) {caregiver's working model};
+\robot{(1.35,0.95)}{child}{child robot}
+\robot{(5.05,0.95)}{carer}{caregiver robot}
+\draw[oarr] (ccf.south) -- (1.35,1.42);
+\draw[oarr] (cpf.south) -- (5.05,1.42);
+\draw[sarr] (2.15,1.0) -- (4.25,1.0);
+% perception of the partner feeds the estimates
+\draw[coupling, line width=0.8pt, dashed, -{Stealth[length=1.6mm]}] (3.2,1.0) -- (3.2,3.15) -- (cce.east);
+\draw[coupling, line width=0.8pt, dashed, -{Stealth[length=1.6mm]}] (3.2,3.15) -- (cpe.west);
+\fill[coupling] (3.2,1.0) circle (0.045);
+\node[note, text=coupling, fill=white, inner sep=1pt] at (3.2,2.0) {distance,\\calls};
+\node[outcome=6.3cm, anchor=north] at (3.2,0.05)
+  {\textbf{coordination restored}: the partner model follows\\the partner, and the realised phase relation returns};
+\end{scope}
+\end{tikzpicture}
+\end{document}
