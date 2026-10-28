@@ -24,6 +24,7 @@ class ExperimentTimer:
         self.seed = int(rospy.get_param("/attachment/seed", -1))
         self.initial_spec = rospy.get_param("/attachment/initial", "")
         self.batch = rospy.get_param("/attachment/batch", "")
+        self.networks = rospy.get_param("/attachment/networks", "default")
         self.start_time = None
         self.wall_start = None
         rospy.on_shutdown(self._save_meta)
@@ -52,6 +53,9 @@ class ExperimentTimer:
             'initial': list(rospy.get_param("/attachment/initial_state",
                                             initial_state(self.initial_spec, self.seed))),
             'batch': self.batch,
+            # "own": every robot uses its own networks; "default": caregiver networks for both robots
+            # in the decoupled and baseline modes
+            'networks': self.networks,
             # The child listens to the caregiver's audio channel (it listened to its own before)
             'audio_fix': True,
         }

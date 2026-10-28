@@ -29,7 +29,6 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
 from load import load_all, default_data_dir   # noqa: E402
-import make_figures as mf                     # noqa: E402
 import metrics                                # noqa: E402
 import model                                  # noqa: E402
 
@@ -44,7 +43,7 @@ def start_type(run):
 
 
 def group_key(run):
-    return (run.controller, run.distance_source or "", start_type(run), run.avoidant, run.ambivalent)
+    return (run.controller, run.distance_source or "", run.networks, start_type(run), run.avoidant, run.ambivalent)
 
 
 def corr(u, v):
@@ -124,6 +123,7 @@ def internal_measures(run, horizon):
         out["belief_p"] = corr(sp[:, 2], sp[:, 0])
         out["track_r"] = corr(sc[:, 2], xp_own)
         out["track_rmse"] = float(np.sqrt(np.nanmean((sc[:, 3] - yp_own) ** 2)))
+        out["track_rmse_x"] = float(np.sqrt(np.nanmean((sc[:, 2] - xp_own) ** 2)))
         # frequency of the child's model of the caregiver against the caregiver's own need
         out["f_model"] = metrics.oscillation_frequency(sc[:, 2], duration)
         out["detune_model"] = abs(out["f_model"] - out["f_partner"])
@@ -143,13 +143,14 @@ def internal_measures(run, horizon):
 
 def run_measures(run, horizon=HORIZON):
     n = int(np.searchsorted(run.t, horizon, side="right"))
-    a = mf.analyse(run, "gt")
+    a = metrics.analyse(run, "gt")
     keep = ~a["stuck"][:n]
     t = run.t[:n]
     rc = agent_regime(run.child_need[:n], t, run.child_acc[:n])
     rp = agent_regime(run.parent_need[:n], t, run.parent_acc[:n])
     m = dict(index=run.index, batch=run.batch or ("D0" if run.index >= 34 else "legacy"),
-             controller=run.controller, distance=run.distance_source or "", start=start_type(run),
+             controller=run.controller, distance=run.distance_source or "", networks=run.networks,
+             start=start_type(run),
              avoidant=run.avoidant, ambivalent=run.ambivalent, seed=run.seed,
              duration=round(float(t[-1]), 1),
              near=float(np.mean(a["near"][:n][keep])), mean_distance=float(np.mean(a["distance"][:n][keep])),
@@ -178,10 +179,10 @@ def windowed(run, window=120.0, step=30.0):
     return rows
 
 
-FIELDS = ["index", "batch", "controller", "distance", "start", "avoidant", "ambivalent", "seed", "duration",
+FIELDS = ["index", "batch", "controller", "distance", "networks", "start", "avoidant", "ambivalent", "seed", "duration",
           "near", "mean_distance", "stuck", "child_calling", "carer_calling", "child_bouts", "reciprocity",
           "r", "freq_c", "freq_p", "regime_c", "regime_p", "regime", "diverged",
-          "belief_c", "belief_p", "track_r", "track_rmse", "est_r_c", "est_r_p", "est_rmse_c", "est_rmse_p",
+          "belief_c", "belief_p", "track_r", "track_rmse", "track_rmse_x", "est_r_c", "est_r_p", "est_rmse_c", "est_rmse_p",
           "f_own_c", "f_model", "f_partner", "detune_own", "detune_model"]
 
 

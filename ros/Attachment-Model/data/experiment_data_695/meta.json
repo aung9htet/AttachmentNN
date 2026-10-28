@@ -1,0 +1,27 @@
+{
+  "avoidant": 0.9,
+  "ambivalent": 0.0,
+  "requested_duration_s": 180.0,
+  "recorded_duration_s": 180.1,
+  "wall_duration_s": 186.45,
+  "date": "2026-10-28 03:16:24",
+  "param_mapping": "fixed",
+  "arena_centre": [
+    0.325,
+    0.325
+  ],
+  "arena_size": 2.61,
+  "box_size": 0.3,
+  "controller": "baseline",
+  "distance": null,
+  "seed": 1,
+  "initial": [
+    0.023643249400513433,
+    0.9009273926518706,
+    -0.7116807745607325,
+    0.8972988942744877
+  ],
+  "batch": "E7b",
+  "networks": "own",
+  "audio_fix": true
+}

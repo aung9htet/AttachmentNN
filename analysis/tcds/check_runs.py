@@ -37,7 +37,8 @@ def replay_check(run):
             sim_all = s[:, 0, :]
         else:
             d = model.simulate_decoupled([run.avoidant], [run.ambivalent], ticks, initial=run.initial,
-                                         partner="analytic" if run.controller == "baseline" else "learned")
+                                         partner="analytic" if run.controller == "baseline" else "learned",
+                                         net_agent="own" if run.networks == "own" else "parent")
             sim_c, sim_p = d["child"][:, 0, 0], d["parent"][:, 0, 2]
             sim_all = model.own_view(d)[:, 0, :]
     within = tsim <= (run.duration + 0.5) * model.PARAMS["h"] * model.TICK_HZ
@@ -93,6 +94,7 @@ def main():
         else:
             ok, msg, rc, rp = log_check(r)
         rows.append(dict(index=r.index, batch=r.batch, controller=r.controller, distance=r.distance_source or "",
+                         networks=r.networks,
                          avoidant=r.avoidant, ambivalent=r.ambivalent, seed=r.seed,
                          initial=" ".join(f"{v:.3f}" for v in r.initial), duration=round(r.duration, 1),
                          rtf=round(r.meta["recorded_duration_s"] / r.meta["wall_duration_s"], 3)

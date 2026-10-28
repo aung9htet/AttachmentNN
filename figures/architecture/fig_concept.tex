@@ -1,0 +1,80 @@
+% Fig. 1: coupled reference, private partner models, and the three readouts. Compile with pdflatex.
+\documentclass[tikz,border=3pt]{standalone}
+\InputIfFileExists{common.tex}{}{\input{diagrams/common.tex}}
+\begin{document}
+\begin{tikzpicture}[font=\scriptsize]
+\tikzset{
+  ag/.style={box=#1, minimum width=1.9cm, minimum height=0.62cm, inner sep=2pt},
+  agm/.style={ag=#1, dashed, fill=#1!4},
+  est/.style={box=coupling, minimum width=1.9cm, minimum height=0.5cm, inner sep=2pt},
+  sarr/.style={{Stealth[length=1.3mm]}-{Stealth[length=1.3mm]}, line width=0.6pt, draw=muted},
+  oarr/.style={-{Stealth[length=1.3mm]}, line width=0.6pt, draw=muted},
+  aarr/.style={-{Stealth[length=1.3mm]}, line width=0.6pt, draw=muted, densely dotted},
+  rnum/.style={circle, draw=ink, fill=white, inner sep=0.6pt, line width=0.5pt, font=\tiny\bfseries, text=ink},
+}
+
+% ============================================================ (a) coupled reference
+\node[ptitle] at (0,4.35) {(a) Coupled reference};
+\node[ag=child] (ac) at (1.15,3.2) {$x_c,\,y_c$};
+\node[ag=carer] (ap) at (3.75,3.2) {$x_p,\,y_p$};
+\draw[sarr] (ac) -- node[note, above=0pt] {$\Phi_p,\Phi_e$} (ap);
+\begin{scope}[on background layer]
+  \node[frame=muted, fit=(ac)(ap), inner xsep=4pt, inner ysep=6pt] (af) {};
+\end{scope}
+\node[note, anchor=south] at (af.north) {one controller};
+\miro{(1.15,0.75)}{child}{child}
+\miro{(3.75,0.75)}{carer}{caregiver}
+\draw[oarr] (ac.south |- af.south) -- (1.15,1.35);
+\draw[oarr] (ap.south |- af.south) -- (3.75,1.35);
+
+% ============================================================ (b) private partner models
+\begin{scope}[xshift=5.55cm]
+\node[ptitle] at (0,4.35) {(b) Private partner models};
+\node[ag=child]  (bco) at (1.2,3.55) {own $x_c,\,y_c$};
+\node[est]       (bce) at (1.2,2.85) {learned $d_p,d_e$};
+\node[agm=carer] (bcm) at (1.2,2.15) {model $\hat{x}_p,\,\hat{y}_p$};
+\draw[sarr] (bco) -- (bce); \draw[sarr] (bce) -- (bcm);
+% analytic propagation of the partner model, Baseline variants only
+\draw[aarr] (bco.west) -| (0.05,2.85) |- (bcm.west);
+\node[note, rotate=90, anchor=south] at (-0.02,2.85) {analytic};
+\begin{scope}[on background layer]
+  \node[frame=child, fit={(bco)(bce)(bcm)(0.05,2.85)}, inner sep=3pt] (bcf) {};
+\end{scope}
+\node[ag=carer]  (bpo) at (6.0,3.55) {own $x_p,\,y_p$};
+\node[est]       (bpe) at (6.0,2.85) {learned $d_p,d_e$};
+\node[agm=child] (bpm) at (6.0,2.15) {model $\hat{x}_c,\,\hat{y}_c$};
+\draw[sarr] (bpo) -- (bpe); \draw[sarr] (bpe) -- (bpm);
+\draw[aarr] (bpo.east) -| (7.15,2.85) |- (bpm.east);
+\node[note, rotate=-90, anchor=south] at (7.22,2.85) {analytic};
+\begin{scope}[on background layer]
+  \node[frame=carer, fit={(bpo)(bpe)(bpm)(7.15,2.85)}, inner sep=3pt] (bpf) {};
+\end{scope}
+\miro{(1.2,0.75)}{child}{child}
+\miro{(6.0,0.75)}{carer}{caregiver}
+\draw[oarr] (1.2,0 |- bcf.south) -- (1.2,1.35);
+\draw[oarr] (6.0,0 |- bpf.south) -- (6.0,1.35);
+\draw[sarr] (1.85,0.75) -- node[note, below=0pt] {approach, calls} (5.35,0.75);
+% sensing, Observed variants only
+\draw[coupling, line width=0.7pt, dashed, -{Stealth[length=1.5mm]}] (3.6,0.75) -- (3.6,2.85) -- (bce.east);
+\draw[coupling, line width=0.7pt, dashed, -{Stealth[length=1.5mm]}] (3.6,2.85) -- (bpe.west);
+\fill[coupling] (3.6,0.75) circle (0.045);
+\node[note, text=coupling, fill=white, inner sep=1pt] at (3.6,1.75) {sensed};
+% readouts
+\node[rnum] at (bce.north east) {1};
+\node[rnum] at (bcm.south east) {2};
+\draw[ink, line width=0.5pt, densely dotted] (bcf.east |- bco) -- node[rnum, solid] {3} (bpf.west |- bco);
+\end{scope}
+
+% ============================================================ (c) three readouts
+\begin{scope}[xshift=13.75cm]
+\node[ptitle] at (0,4.35) {(c) Readouts};
+\foreach \n/\name/\expr [count=\k] in {1/target agreement/{$r(d,\ \Phi(\text{true}))$},
+                                        2/partner tracking/{$r(\hat{x}_p,\ x_p)$},
+                                        3/realised coordination/{$r(x_c,\ x_p)$}} {
+  \node[rnum] at (0.15,{3.75-0.9*(\k-1)}) {\n};
+  \node[anchor=west, text=ink, inner sep=0pt] at (0.35,{3.75-0.9*(\k-1)}) {\name};
+  \node[anchor=west, text=muted, inner sep=0pt] at (0.35,{3.38-0.9*(\k-1)}) {\expr};
+}
+\end{scope}
+\end{tikzpicture}
+\end{document}

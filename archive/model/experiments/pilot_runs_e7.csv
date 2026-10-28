@@ -1,0 +1,3 @@
+id,batch,controller,distance,avoidant,ambivalent,duration,seed,initial,networks
+P7_decoupled_av0.0_am0.2_r1_own,P7,decoupled,,0.0,0.2,60,1,random,own
+P7_baseline_av0.2_am0.0_r1_own,P7,baseline,,0.2,0.0,60,1,random,own

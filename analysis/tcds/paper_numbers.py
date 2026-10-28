@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Numbers and tables quoted in the TCDS draft. Writes results/numbers.json and the LaTeX tables in
-papers/tcds/draft/tables/. Run after check_runs.py, gazebo.py, robustness.py, estimator_eval.py and
-inverse.py.
+Numbers and tables quoted in the TCDS paper. Writes results/numbers.json and the LaTeX tables in
+analysis/tcds/tables/. Run after canonical.py, ssp_sim.py, check_runs.py, gazebo.py, robustness.py,
+estimator_eval.py, inverse.py and calibration.py.
 """
 import os
 import sys
@@ -13,15 +13,14 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ANALYSIS = os.path.dirname(HERE)
-REPO = os.path.dirname(ANALYSIS)
 sys.path.insert(0, ANALYSIS)
 
 from load import load_all          # noqa: E402
 import gazebo as gz                # noqa: E402
-from figures import gazebo_table, select, by_value, mean_ci, MODES, ANCHOR_DESIGNS   # noqa: E402
+from figures import gazebo_table, select, by_value, mean_ci, MODES, ANCHOR_DESIGNS, READOUT_VARIANTS, readout_runs   # noqa: E402
 
 RES = os.path.join(HERE, "results")
-TABLES = os.path.join(REPO, "papers", "tcds", "draft", "tables")
+TABLES = os.path.join(HERE, "tables")
 
 
 def r3(x):
@@ -205,11 +204,10 @@ def estimation_table(rows):
 def anchoring(rows):
     """Pooled over 0.1 <= eps_Am <= 0.4 (random starts, runs that did not escape), by design (Fig. anchoring)."""
     out = {}
-    for controller, distance in ANCHOR_DESIGNS:
-        runs = [r for r in select(rows, controller, "random", "ambivalent", distance)
-                if 0 < r["ambivalent"] <= 0.4 and r["regime"] != "escaped"]
+    for controller, distance in READOUT_VARIANTS:
+        runs = readout_runs(rows, controller, distance)
         cell = {"n": len(runs)}
-        for key in ("r", "belief_c", "track_r", "detune_model", "detune_own", "reciprocity", "est_r_c"):
+        for key in ("r", "belief_c", "track_r", "track_rmse_x", "detune_model", "detune_own", "reciprocity", "est_r_c"):
             v = np.array([r.get(key, np.nan) for r in runs], float)
             if key.startswith("detune"):
                 v = v * 1000            # mHz
@@ -217,12 +215,12 @@ def anchoring(rows):
             cell[key] = dict(mean=r3(m), ci=r3(ci))
         out[f"{controller}{'-' + distance if distance else ''}"] = cell
     # avoidance at 0.1, the only avoidance value at which every private design stays bounded
-    for controller, distance in ANCHOR_DESIGNS:
+    for controller, distance in READOUT_VARIANTS:
         runs = [r for r in select(rows, controller, "random", "avoidant", distance)
                 if r["avoidant"] == 0.1 and r["regime"] != "escaped"]
         out[f"{controller}{'-' + distance if distance else ''}/avoidant0.1"] = {
             key: r3(np.nanmean([r.get(key, np.nan) for r in runs])) if runs else None
-            for key in ("r", "belief_c", "track_r", "reciprocity")}
+            for key in ("r", "belief_c", "track_r", "track_rmse_x", "est_r_c", "reciprocity")}
     return out
 
 
@@ -251,24 +249,37 @@ def conditions_table(rows):
 def inverse_summary():
     inv = np.load(os.path.join(RES, "inverse.npz"))
     out = {"n_train": int(len(inv["Ytr"])), "n_test": int(len(inv["Yte"])),
-           "n_test_random": int(inv["gazebo_random_start"].sum())}
+           "n_test_random": int(inv["gazebo_random_start"].sum()),
+           "n_test_bounded": int(inv["gazebo_bounded"].sum()),
+           "test_counts": inv["test_counts"].tolist(), "test_counts_bounded": inv["test_counts_bounded"].tolist(),
+           "majority": r3(inv["majority"]), "majority_bounded": r3(inv["majority_bounded"])}
     for name in ("child", "dyad"):
         out[name] = dict(sim_cv=r3(inv[f"{name}/cv_acc"]), transfer=r3(inv[f"{name}/test_acc"]),
                          transfer_identical=r3(inv[f"{name}/test_acc_identical"]),
                          transfer_random=r3(inv[f"{name}/test_acc_random"]), gazebo_cv=r3(inv[f"{name}/gazebo_cv_acc"]),
-                         mae=[r3(x) for x in inv[f"{name}/test_mae"]], confusion=inv[f"{name}/confusion"].tolist(),
+                         transfer_bounded=r3(inv[f"{name}/test_acc_bounded"]),
+                         mae=[r3(x) for x in inv[f"{name}/test_mae"]],
+                         mae_bounded=[r3(x) for x in inv[f"{name}/test_mae_bounded"]],
+                         confusion=inv[f"{name}/confusion"].tolist(),
                          importance=dict(zip([str(inv["feature_names"][c]) for c in inv[f"{name}/cols"]],
                                              [r3(x) for x in inv[f"{name}/importance"]])))
-    n = out["n_test"]
+    cal_file = os.path.join(RES, "calibration.json")
+    if os.path.exists(cal_file):
+        with open(cal_file) as f:
+            out["calibration"] = json.load(f)
+    n, nb = out["n_test"], out["n_test_bounded"]
+    pct = lambda x: f"{100 * x:.0f}\\%"
+    rows = [f"{'Child only' if k == 'child' else 'Both agents'} & {pct(out[k]['sim_cv'])} & {pct(out[k]['transfer'])} & "
+            f"{pct(out[k]['transfer_bounded'])} & {pct(out[k]['gazebo_cv'])} & "
+            f"{out[k]['mae'][0]:.2f} & {out[k]['mae'][1]:.2f} \\\\" for k in ("child", "dyad")]
+    rows.append(f"Majority class & --- & {pct(out['majority'])} & {pct(out['majority_bounded'])} & {pct(out['majority'])} & --- & --- \\\\")
     with open(os.path.join(TABLES, "inverse.tex"), "w") as f:
         f.write("\n".join([
-            r"\begin{tabular}{@{}lrrrrr@{}}", r"\toprule",
-            r"Observer & Stand-in CV & Gazebo transfer & Gazebo CV & MAE $\varepsilon_{Av}$ & MAE $\varepsilon_{Am}$ \\",
-            r"\midrule",
-            *[f"{'Child only' if k == 'child' else 'Both agents'} & {100 * out[k]['sim_cv']:.0f}\\% & "
-              f"{100 * out[k]['transfer']:.0f}\\% ({round(out[k]['transfer'] * n)}/{n}) & {100 * out[k]['gazebo_cv']:.0f}\\% & "
-              f"{out[k]['mae'][0]:.2f} & {out[k]['mae'][1]:.2f} \\\\" for k in ("child", "dyad")],
-            r"\bottomrule", r"\end{tabular}"]) + "\n")
+            r"\begin{tabular}{@{}lrrrrrr@{}}", r"\toprule",
+            r" & Stand-in & \multicolumn{2}{c}{Transfer} & Gazebo & \multicolumn{2}{c}{MAE} \\",
+            r"Observer & CV & all & bounded & CV & $\varepsilon_{Av}$ & $\varepsilon_{Am}$ \\",
+            rf"$n$ & {out['n_train']} & {n} & {nb} & {n} & \multicolumn{{2}}{{c}}{{{n}}} \\",
+            r"\midrule", *rows, r"\bottomrule", r"\end{tabular}"]) + "\n")
     return out
 
 

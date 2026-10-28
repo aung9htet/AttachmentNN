@@ -1,0 +1,3 @@
+id,status,index,message,wall_s,finished
+P6_baseline-observed-gt_av0.2_am0.0_r1,ok,12,"60s recorded, real-time factor 1.00",67.4,2026-10-24 18:37:27
+P6_baseline_av0.0_am0.2_r1,ok,13,"60s recorded, real-time factor 1.00",67.5,2026-10-24 18:37:27

@@ -314,7 +314,7 @@ class IndividualAttachmentController:
     learned one ('baseline': network inputs as decoupled, 'baseline-observed': as observed).
     """
 
-    def __init__(self, robot_name, mode="decoupled", initial=None, distance_source="gt"):
+    def __init__(self, robot_name, mode="decoupled", initial=None, distance_source="gt", networks="default"):
         # Don't initialize node here - will be done in main
 
         # Publishers
@@ -356,7 +356,8 @@ class IndividualAttachmentController:
         # Load neural network models: the caregiver's for both robots in the decoupled mode (as
         # recorded so far), the robot's own when it uses its own observations
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.net_agent = "parent" if mode in ("decoupled", "baseline") else robot_name
+        # networks="own" gives every robot its own networks in every mode (network-role ablation)
+        self.net_agent = "parent" if mode in ("decoupled", "baseline") and networks != "own" else robot_name
         self.sensing = mode in ("observed", "baseline-observed")
         self.partner_baseline = mode.startswith("baseline")
         self.partner_physical = self.partner_emotional = 0.0
@@ -582,13 +583,14 @@ if __name__ == '__main__':
         mode = rospy.get_param("/attachment/controller", "decoupled")
         distance_source = rospy.get_param("/attachment/distance", "gt")
         initial = initial_state(rospy.get_param("/attachment/initial", ""), rospy.get_param("/attachment/seed", -1))
+        networks = rospy.get_param("/attachment/networks", "default")
         rospy.set_param("/attachment/initial_state", list(initial))
         rospy.loginfo(f"Attachment controller: mode={mode}, distance={distance_source}, initial={initial}")
 
         if mode == "coupled":
             CentralAttachmentController(initial).run()
         elif mode in ("decoupled", "observed", "baseline", "baseline-observed"):
-            run_threads([IndividualAttachmentController(name, mode, initial, distance_source)
+            run_threads([IndividualAttachmentController(name, mode, initial, distance_source, networks)
                          for name in ("child", "parent")])
         elif mode == "notebook":
             run_threads([NotebookAgentController(name, initial, distance_source) for name in ("child", "parent")])

@@ -10,7 +10,7 @@ output directory as experiment_data_{next index}. A manifest records every attem
 interrupted batch can be resumed by running the same command again.
 
     python3 experiments/run_batch.py experiments/tcds_runs.csv --workers 5
-    python3 experiments/run_batch.py experiments/pilot_runs.csv --workers 4 --out experiments/pilot_data
+    python3 experiments/run_batch.py my_runs.csv --workers 4 --out /path/to/output     # any other run list
 
 The run list is a CSV with columns: id, batch, controller, distance, avoidant, ambivalent,
 duration, seed, initial (see make_runs.py). Only the standard library is used.
@@ -100,6 +100,8 @@ def launch_command(run):
             f"seed:={int(run['seed'])}", f"batch:={run['batch']}"]
     if run["initial"]:
         args.append(f"initial:={run['initial']}")
+    if run.get("networks"):
+        args.append(f"networks:={run['networks']}")
     timeout = int(float(run["duration"])) + 240
     return (f"cd {CONTAINER_PKG} && timeout {timeout} roslaunch attachment_model relationship.launch "
             + " ".join(args))

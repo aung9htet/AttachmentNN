@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-Measures used in the npj paper's robot experiment, computed from recorded runs.
+Behavioural measures computed from recorded runs: time near the caregiver, stuck periods, need
+correlation and frequency, vocal bouts (first defined for the npj paper's robot experiment).
 """
 from itertools import combinations
 
 import numpy as np
 from scipy import stats
 from scipy.signal import hilbert
+
+BINS = 50            # heat-map grid of the stuck-period rule, as in the npj paper
 
 
 def stuck_mask(child_xy, child_state, arena_centre, arena_size, bins=50):
@@ -39,6 +42,32 @@ def near_caregiver(child_xy, parent_xy, half_side):
     """True where the child is inside the square of the given half side around the caregiver."""
     offset = np.abs(child_xy - parent_xy)
     return (offset[:, 0] <= half_side) & (offset[:, 1] <= half_side)
+
+
+def arena_limits(run):
+    low = np.asarray(run.arena_centre) - run.arena_size / 2.0
+    return low, low + run.arena_size
+
+
+def half_square(run):
+    """Half side of the 'close to the caregiver' square: the central quarter of the arena."""
+    return run.arena_size / 4.0
+
+
+def analyse(run, source):
+    """Per-run quantities shared by the figures."""
+    child, parent = run.positions(source)
+    stuck = stuck_mask(child, run.child_state, run.arena_centre, run.arena_size, BINS)
+    near = near_caregiver(child, parent, half_square(run))
+    return dict(child=child, parent=parent, distance=run.distance(source), stuck=stuck, near=near)
+
+
+def spans(mask, t):
+    """(start, end) times of the contiguous True stretches of a mask."""
+    mask = np.asarray(mask, dtype=bool)
+    edges = np.diff(np.concatenate(([0], mask.astype(int), [0])))
+    starts, ends = np.flatnonzero(edges == 1), np.flatnonzero(edges == -1) - 1
+    return [(t[s], t[e]) for s, e in zip(starts, ends)]
 
 
 def block_bootstrap_ci(values, block, n_boot=2000, seed=0):

@@ -1,0 +1,13 @@
+id,status,index,message,wall_s,finished
+P_coupled_av0.0_am0.2_r1,ok,0,"60s recorded, real-time factor 0.96",72.1,2026-10-24 13:33:42
+P_coupled_av0.2_am0.0_r1,ok,1,"60s recorded, real-time factor 0.96",72.2,2026-10-24 13:33:42
+P_decoupled_av0.2_am0.0_r1,ok,2,"60s recorded, real-time factor 0.96",72.2,2026-10-24 13:33:42
+P_decoupled_av0.0_am0.2_r1,ok,3,"60s recorded, real-time factor 0.96",72.2,2026-10-24 13:33:42
+P_decoupled_av0.0_am0.2_i7_rep1,ok,4,"60s recorded, real-time factor 0.93",74.3,2026-10-24 13:33:44
+P_decoupled_av0.0_am0.2_i7_rep2,ok,5,"60s recorded, real-time factor 0.91",75.8,2026-10-24 13:33:46
+P_observed-gt_av0.2_am0.0_r1,ok,6,"60s recorded, real-time factor 0.97",71.0,2026-10-24 13:34:53
+P_notebook-gt_av0.2_am0.0_r1,ok,7,"60s recorded, real-time factor 0.96",71.3,2026-10-24 13:34:54
+P_observed-odom_av0.0_am0.2_r1,ok,8,"60s recorded, real-time factor 0.96",71.7,2026-10-24 13:34:54
+P_notebook-gt_av0.0_am0.2_r1,ok,9,"60s recorded, real-time factor 0.96",69.7,2026-10-24 13:34:54
+P_coupled_av0.0_am0.0_i101,ok,10,"60s recorded, real-time factor 0.97",69.0,2026-10-24 13:34:55
+P_observed-gt_av0.0_am0.2_r1,ok,11,"60s recorded, real-time factor 0.91",75.0,2026-10-24 13:34:57

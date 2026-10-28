@@ -19,6 +19,8 @@
   <arg name="initial" default=""/>
   <!-- Free-text batch label stored in meta.json -->
   <arg name="batch" default=""/>
+  <!-- networks: "default" (caregiver networks for both robots in decoupled/baseline modes) or "own" -->
+  <arg name="networks" default="default"/>
 
   <param name="/attachment/avoidant" value="$(arg avoidant)" type="double"/>
   <param name="/attachment/ambivalent" value="$(arg ambivalent)" type="double"/>
@@ -27,6 +29,7 @@
   <param name="/attachment/seed" value="$(arg seed)" type="int"/>
   <param name="/attachment/initial" value="$(arg initial)" type="str"/>
   <param name="/attachment/batch" value="$(arg batch)" type="str"/>
+  <param name="/attachment/networks" value="$(arg networks)" type="str"/>
 
   <!-- Gazebo Simulation: world and arena from this package, MiRo model from the MDK -->
   <env name="GAZEBO_MODEL_PATH" value="$(find attachment_model)/models:$(find attachment_model)/../../../sim/models:$(env GAZEBO_MODEL_PATH)" />

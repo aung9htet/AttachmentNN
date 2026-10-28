@@ -53,6 +53,7 @@ class Run:
     parent_odom: np.ndarray = None
     controller: str = "decoupled"   # decoupled, coupled, observed, notebook; "legacy" for runs 0-33
     distance_source: str = None     # gt or odom (observed and notebook controllers)
+    networks: str = "default"       # "own": decoupled/baseline robots load their own role's networks
     seed: int = -1
     initial: tuple = (-1.0, 1.0, -1.0, 1.0)   # starting needs (x_c, y_c, x_p, y_p)
     batch: str = ""
@@ -151,6 +152,7 @@ def load_run(path):
         meta=meta,
         controller=meta.get("controller", "legacy" if legacy else "decoupled"),
         distance_source=meta.get("distance"),
+        networks=meta.get("networks") or "default",
         seed=int(meta.get("seed", -1)),
         initial=tuple(meta.get("initial", (-1.0, 1.0, -1.0, 1.0))),
         batch=meta.get("batch", ""),

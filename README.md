@@ -1,447 +1,263 @@
 # AttachmentNN
 
-This repository contains experiments extending the coupled-oscillator model of human attachment dynamics presented in:
+Robot controllers, simulated robot experiments, recorded runs and analyses for a coupled-oscillator model of attachment running on a dyad of MiRo robots, a child and a caregiver.
 
-**"A coupled-oscillator model of human attachment dynamics evaluated in a robot dyadic interaction"**  
-*Aung Htet, Alejandro Jimenez-Rodriguez, Marcantonio Gagliardi, and Tony J. Prescott*
+In the coupled-oscillator model of attachment [1], care-seeking and caregiving are motivational oscillators. They are coupled through a physical and an emotional distance, weighted by avoidance (ε<sub>Av</sub>) and ambivalence (ε<sub>Am</sub>). In that model both distances are computed from the two partners' internal needs, which neither robot could sense. This project grounds the coupling in what each robot can sense:
+- each robot integrates its own oscillator and a private model of its partner;
+- neural networks estimate the coupling terms from the robot's own state and, in some variants, from the sensed distance and calls.
 
-## Overview
+The evaluation keeps three readouts apart:
+- agreement of the estimates with the coupling targets;
+- tracking of the partner by the partner model;
+- coordination between the robots' own needs.
 
-This repository provides a simulated MiRo robot implementation in Gazebo to study the attachment control system and collect experimental data. Additional experiments explore using neural networks to estimate physical and emotional distance as coupling functions.
+<p align="center"><img src="figures/architecture/fig_concept.png" width="100%" alt="Coupled reference, private partner models and the three readouts"></p>
 
-## Prerequisites Installation
+*(a) Coupled reference: one controller integrates both needs and computes the coupling from both. (b) Private partner models: each robot integrates its own state and a model of its partner, driven by learned coupling estimates. Dashed: sensed distance and calls (Observed variants). Dotted: analytic propagation of the partner model (Baseline variants). (c) The three readouts.*
 
-This project runs in a Docker container using the image `aung9htet/ubuntu-20.04:miro`.
+The main findings, reported in a manuscript in preparation for *IEEE Transactions on Cognitive and Developmental Systems*:
+- **The regimes are visible.** The model's regimes leave distinct signatures in distance and vocal exchange.
+- **Learned open-loop estimates fail to keep the robots coordinated.** Each controller stays internally coordinated while the robots' rhythms drift apart, and close agreement with the coupling targets coexists with poor partner tracking.
+- **Analytic propagation restores tracking without perception.** Propagating the partner model analytically, with networks trained for each role, restores tracking and partial coordination. It works because both private copies start from the same state.
 
-### 1. Install Docker
+## Contents
 
-If you don't have Docker installed on your system, follow these steps:
+| Path | Content |
+|---|---|
+| `ros/Attachment-Model/` | ROS Noetic package `attachment_model`: robot nodes, the attachment controllers, the trained coupling networks (`src/*.pth`) and their training notebook, the Gazebo world |
+| `ros/Attachment-Model/data/` | Recorded runs, one `experiment_data_{index}/` folder per run |
+| `experiments/` | Run lists of the Gazebo batches, the parallel batch runner, and the manifests that map each run to its data folder |
+| `analysis/` | Loading (`load.py`) and behavioural measures (`metrics.py`) of the recorded runs |
+| `analysis/tcds/` | The paper's analyses: scripts, `results/`, `figures/` (PDF) and `tables/` |
+| `figures/architecture/` | TikZ sources of the architecture diagrams (the concept figure above and the controller diagram) |
+| `archive/` | Code the paper does not use (see [Archive](#archive)) |
+| `run_docker.bash`, `save_docker.bash` | Start the ROS container; save it to the image |
 
-**For Ubuntu/Debian:**
+## Setup
 
-Follow the official Docker installation guide: **[Install Docker on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)**
+Everything runs in the Docker image `aung9htet/ubuntu-20.04:miro`. It contains:
+- Ubuntu 20.04, ROS Noetic, Gazebo 11 and the MiRo developer kit (release 230105);
+- a Python 3.8 environment at `/workspace/.venv` with NumPy, SciPy, Matplotlib, scikit-learn and PyTorch.
 
-Or use these quick commands:
+1. **Install Docker:** [Docker Engine](https://docs.docker.com/engine/install/) and the [post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/). For the robots' camera rendering on a GPU, also install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+2. **Start the ROS container** (X11 forwarding, GPU, host network):
+   ```bash
+   ./run_docker.bash      # creates ros_container, or opens a shell in it if it exists
+   ```
+   - The package is mounted at `/root/mdk/catkin_ws/src/Attachment-Model` and `analysis/` at `/root/analysis`, so recorded runs land in this repository.
+   - A `ros_container` created before these mounts existed must be removed once: `docker rm -f ros_container`.
+3. **Build the package in the container** if it is not built yet:
+   ```bash
+   cd /root/mdk/catkin_ws && catkin build attachment_model && source devel/setup.bash
+   ```
+4. **Save the container** with `./save_docker.bash`. This commits the container to the image and overwrites it.
+
+The analyses need no ROS. From the repository root, this shell function runs any script in the image:
+
 ```bash
-# Update package index
-sudo apt-get update
-
-# Install required packages
-sudo apt-get install -y ca-certificates curl gnupg lsb-release
-
-# Add Docker's official GPG key
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-
-# Set up the repository
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Install Docker Engine
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+py() { docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e MPLCONFIGDIR=/tmp \
+         -v "$PWD:/repo" -w /repo aung9htet/ubuntu-20.04:miro /workspace/.venv/bin/python -W ignore "$@"; }
 ```
 
-**For other operating systems:** Visit **[Docker's official installation guide](https://docs.docker.com/get-docker/)**
+## The model
 
-**Run Docker without sudo (recommended):**
+Each agent *i* ∈ {*c*, *p*} (child, caregiver) has two states:
+- a fast need *x<sub>i</sub>*: it approaches its partner when *x<sub>i</sub>* > 0 and explores when *x<sub>i</sub>* < 0;
+- a slow accumulated need *y<sub>i</sub>*.
 
-Follow the post-installation steps: **[Linux post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/)**
+The robot controllers integrate
 
-```bash
-# Add your user to the docker group
-sudo usermod -aG docker $USER
+$$\dot x_i = 2x_i - 4x_i^3 - y_i,$$
 
-# Log out and log back in for group changes to take effect
-# Or run: newgrp docker
-```
+$$\dot y_c = b'x_c - \varepsilon_{Am}(y_c + y_p - d_p) - \varepsilon_{Av}(y_p - y_c - d_e),\qquad
+\dot y_p = b'x_p - \varepsilon_{Am}(y_c + y_p + d_p) - \varepsilon_{Av}(y_p - y_c - d_e),$$
 
-**Install NVIDIA Docker (if you have an NVIDIA GPU):**
+with *b′* = 0.7. Integration is fourth-order Runge–Kutta at 30 control ticks per second, with *h* = 0.01 of model time per tick. The two distances differ by controller:
+- **Coupled reference:** *d<sub>p</sub>* and *d<sub>e</sub>* are computed from both true accumulated needs, as *d<sub>p</sub>* = ½(*y<sub>c</sub>* + *y<sub>p</sub>*) + *y<sub>c</sub>* and *d<sub>e</sub>* = *k*<sub>0</sub>(½(*y<sub>c</sub>* − *y<sub>p</sub>*) + *y<sub>c</sub>*) + *k*<sub>0</sub>δ, with *k*<sub>0</sub> = 0.8 and δ = 0.1.
+- **Private-model controllers:** networks estimate them from the robot's own state and either internal or sensed inputs.
 
-Official guide: **[NVIDIA Container Toolkit Installation](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)**
+| Form of the model | Code |
+|---|---|
+| Robot controllers (all variants) | `ros/Attachment-Model/src/attachment_model_control.py` |
+| The same controllers outside ROS, vectorised | `analysis/tcds/model.py`; the networks are read without PyTorch by `nnweights.py` |
+| Canonical model, analysed for its regimes (*ẋ* = *x* − 2*x*³ − *y*, time scale μ = 0.1) | `analysis/tcds/canonical.py` |
+| Agent-based strange situation in which the networks were trained | `ros/Attachment-Model/src/attachment_with_nn.ipynb`, re-implemented in `analysis/tcds/sim_agents.py` |
+| Kinematic stand-in of the Gazebo experiment (inverse study) | `analysis/tcds/sim_kinematic.py` |
 
-```bash
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+## Experiments
 
-sudo apt-get update && sudo apt-get install -y nvidia-docker2
-sudo systemctl restart docker
-```
+### Controller variants
 
-**Additional Resources:**
+The launch arguments `controller`, `distance` and `networks` select the variant:
 
-For more information and tutorials, check out these helpful resources:
-- **Docker Documentation**: [https://docs.docker.com/](https://docs.docker.com/)
-- **Docker Installation Guide**: [https://docs.docker.com/engine/install/](https://docs.docker.com/engine/install/)
-- **NVIDIA Container Toolkit**: [https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/)
+| Variant | Launch settings | Partner model | Inputs of the learned distances |
+|---|---|---|---|
+| Coupled reference | `controller:=coupled` | none: one integrator holds both robots' true needs | none (analytic distances) |
+| Decoupled | `controller:=decoupled` (default) | learned distances | internal need gap, silent calls; both robots load the caregiver's networks |
+| Observed | `controller:=observed distance:=gt` (`odom` for odometry) | learned distances | sensed distance and calls; each robot loads its own networks |
+| Baseline | `controller:=baseline` | analytic distances on the private copy | internal need gap, silent calls; the caregiver's networks |
+| Baseline-observed | `controller:=baseline-observed distance:=gt` | analytic distances on the private copy | sensed distance and calls; own networks |
+| Notebook | `controller:=notebook distance:=gt` | none: own need only, with the training simulator's equations | sensed distance and calls; own networks |
+| Decoupled or Baseline, own networks | `networks:=own` with `decoupled` or `baseline` | as above | each robot loads its own networks (network-assignment ablation) |
 
-### 2. Starting the Docker Container
+### One run
 
-To start the Docker container with all necessary configurations:
-
-```bash
-./run_docker.bash
-```
-
-This script will:
-- Enable X11 forwarding for GUI applications
-- Mount this repository's ROS package into the container's catkin workspace
-- Configure GPU support
-- Launch the container with the name `ros_container` (or open a new shell in it if it already exists)
-
-**How the project is shared with the container**
-
-The ROS package lives in this repository at `ros/Attachment-Model/` and is bind-mounted to `/root/mdk/catkin_ws/src/Attachment-Model` inside the container. The `analysis/` folder is mounted at `/root/analysis`. Code edits, recorded data and figures are therefore the same files on both sides: anything an experiment saves appears in this repository and can be committed and pushed.
-
-The mount is set up when the container is created. If you already have a `ros_container` from before this change, remove it once (`docker rm -f ros_container`) and run `./run_docker.bash` again.
-
-### 3. Working Inside the Container
-
-Once inside the container, you can:
-- Run experiments and simulations
-- Install additional packages as needed
-- Access your workspace files (if volume mounting is enabled)
-
-To exit the container without stopping it:
-```bash
-# Press Ctrl+P, then Ctrl+Q
-```
-
-To exit and stop the container:
-```bash
-exit
-```
-
-**Note:** If you need to return to the container later, see section 6 for reattaching instructions.
-
-### 4. Saving Your Changes
-
-If you've made changes inside the container (installed packages, modified files, etc.) and want to save them to the Docker image:
+In the container:
 
 ```bash
-./save_docker.bash
-```
-
-This will commit your changes to the `aung9htet/ubuntu-20.04:miro` image.
-
-**Warning:** This will overwrite the existing image. Make sure you want to save your changes before running this command.
-
-### 5. Removing the Container
-
-To stop and remove the container:
-
-```bash
-# Stop the container
-docker stop ros_container
-
-# Remove the container
-docker rm ros_container
-```
-
-To remove the container forcefully (if it's running):
-
-```bash
-docker rm -f ros_container
-```
-
-### 6. Reattaching to a Running Container (Optional)
-
-If you've detached from the container using `Ctrl+P` then `Ctrl+Q` and want to reattach:
-
-```bash
-docker attach ros_container
-```
-
-Or start a new bash session in the running container:
-
-```bash
-docker exec -it ros_container bash
-```
-
-**Note:** This section is only needed if you're not using volume mounts and need to access a detached container.
-
-### 7. Managing Docker Images
-
-To list all Docker images:
-```bash
-docker images
-```
-
-To remove the Docker image (if needed):
-```bash
-docker rmi aung9htet/ubuntu-20.04:miro
-```
-
-### Troubleshooting Docker Issues
-
-**Permission denied errors:**
-- Make sure your user is in the docker group: `groups $USER`
-- Log out and log back in after adding yourself to the docker group
-
-**GPU not detected:**
-- Verify NVIDIA drivers are installed: `nvidia-smi`
-- Ensure nvidia-docker2 is properly installed
-
-**X11 forwarding not working:**
-- Run `xhost local:root` before starting the container
-- Check that `DISPLAY` environment variable is set: `echo $DISPLAY`
-
-**Container name already in use:**
-- Remove the existing container: `docker rm ros_container`
-- Or use a different container name in `run_docker.bash`
-
-## Development Tools (Optional)
-
-**Visual Studio Code Setup:**
-1. Install [Visual Studio Code](https://code.visualstudio.com/)
-2. Install the "Docker" extension from the VS Code marketplace
-3. Install the "Dev Containers" extension for developing inside Docker containers
-4. You can attach VS Code to your running container for easier development
-
-This allows you to write and debug code directly within the Docker environment.
-
-## Running the Experiment
-
-Once inside the Docker container, you can run the attachment model experiment.
-
-### Starting the Experiment
-
-To launch the attachment model simulation:
-
-```bash
-roslaunch attachment_model relationship.launch avoidant:=0.0 ambivalent:=0.1 duration:=300
+roslaunch attachment_model relationship.launch avoidant:=0.0 ambivalent:=0.2 duration:=180 \
+    controller:=decoupled seed:=1 initial:=random
 ```
 
 | Argument | Default | Meaning |
 |---|---|---|
-| `avoidant` | `0.0` | Avoidance level, 0.0 to 1.0 (emotional-distance coupling) |
-| `ambivalent` | `0.0` | Ambivalence level, 0.0 to 1.0 (physical-distance coupling) |
-| `duration` | `0` | Run length in simulation seconds; `0` runs until Ctrl+C |
-| `gui` | `true` | Show the Gazebo client and the camera preview window |
+| `avoidant`, `ambivalent` | `0.0` | ε<sub>Av</sub> (emotional-distance coupling) and ε<sub>Am</sub> (physical-distance coupling), 0 to 1 |
+| `duration` | `0` | Run length in simulated seconds; `0` runs until Ctrl+C |
+| `controller` | `decoupled` | Controller variant (table above) |
+| `distance` | `gt` | Sensed distance for `observed`, `baseline-observed` and `notebook`: `gt` (Gazebo ground truth) or `odom` |
+| `networks` | `default` | `own`: `decoupled` and `baseline` load each robot's own networks instead of the caregiver's |
+| `seed` | `-1` | Seed of the random exploration and of random starting needs; `-1` leaves both unseeded |
+| `initial` | empty | Starting needs: empty for (−1, 1, −1, 1), `random` (needs a seed), or four numbers |
+| `batch` | empty | Label stored in `meta.json` |
+| `gui` | `true` | Show the Gazebo client and the camera preview |
 
-**What happens when you start the experiment:**
+**What the launch file starts:**
+- **World:** Gazebo with `worlds/attachment.world`, a 2.61 m arena centred on the caregiver's 0.3 m box, which has an AprilTag on each face.
+- **Nodes:** `child_node.py`, `parent_node.py`, `attachment_model_control.py`, `perception.py`, `camera_recording.py` and `experiment_timer.py`.
 
-1. **Gazebo Simulation Launches**: Opens the arena (`worlds/attachment.world`) with the parent and child MiRo robots
-2. **Robot Nodes Start**: Initializes child and parent robot control nodes
-3. **Attachment Model Runs**: The attachment controller executes the attachment model (coupled through the neural networks)
-4. **Perception System Activates**: AprilTag detection for robot tracking and localization
-5. **Data Recording Begins**:
-   - Camera stream is recorded to `camera_recording.mp4`
-   - Robot behavior data, robot paths and inter-robot distance are saved as NumPy dictionaries (`child_data.npy`, `parent_data.npy`)
-   - Run parameters are saved to `meta.json`
-   - Everything goes to a new `ros/Attachment-Model/data/experiment_data_{index}/` folder
-6. **The run ends** after `duration` seconds; all nodes save their data on shutdown
+**What the robots do:**
+- The child explores by a random walk while its need is negative, and steers to the caregiver's tags while it is positive.
+- The caregiver stays on its box.
+- Both robots call on a simulated channel.
 
-### Recording a batch of experiments
+When the run ends, everything is saved to the next free `data/experiment_data_{index}/`.
 
-`run_experiments.sh` records several conditions one after another (run it inside the container):
+### Batches
+
+Every Gazebo run in the paper comes from one of three run lists in `experiments/`. Unless stated otherwise, runs last 180 s.
+- **Strips:** the origin plus 0.1–0.9 on each parameter axis with the other at zero (19 conditions).
+- **Random starts:** starting needs drawn from the seed, so seed *s* gives the same start for every controller.
+- **Identical start:** (−1, 1, −1, 1).
+
+| Batch | Variant | Conditions | Starts (seeds) | Runs | List → data folders |
+|---|---|---|---|---|---|
+| E1s | Decoupled | strips | identical (101–103) | 57 | `tcds_runs.csv` → 54–496 |
+| E1r | Decoupled | strips | random (1–5) | 95 | 〃 |
+| E2 | Coupled reference | strips | random (1–3), identical (101) | 76 | 〃 |
+| E3 | Decoupled, Coupled reference | six off-axis pairs | random (1–3) | 36 | 〃 |
+| E4 | Decoupled, Coupled reference | ε<sub>Av</sub> = 0.2 or ε<sub>Am</sub> = 0.2, 900 s | random (1–2) | 8 | 〃 |
+| E5a | Observed (ground truth) | strips | random (1–3) | 57 | 〃 |
+| E5b | Observed (odometry) | strips | random (1–3) | 57 | 〃 |
+| E5c | Notebook | strips | random (1–3) | 57 | 〃 |
+| E6a | Baseline | strips | random (1–3) | 57 | `tcds_runs_e6.csv` → 497–610 |
+| E6b | Baseline-observed | strips | random (1–3) | 57 | 〃 |
+| E7a | Decoupled, own networks | strips | random (1–3) | 57 | `tcds_runs_e7.csv` → 611–724 |
+| E7b | Baseline, own networks | strips | random (1–3) | 57 | 〃 |
+
+**Earlier recordings in the same folder:**
+- **D0, runs 34–53:** the first runs with robot paths, all with the Decoupled controller from the identical start. They are:
+  - three regimes of 300 s: secure (ε<sub>Am</sub> 0.1), strongly avoidant (ε<sub>Av</sub> 0.9) and moderately ambivalent (ε<sub>Am</sub> 0.4);
+  - sweeps of each parameter from 0.1 to 0.8 at 180 s;
+  - the origin.
+
+  They were recorded with `archive/model/ros/run_experiments.sh` and are included in `gazebo_runs.csv`. The paper's arena figure uses a frame of run 34.
+- **Runs 0–33:** no robot paths and no `meta.json`.
+  - Runs 0–16 (180 s each) were recorded as training data; runs 17–33 last 60 s.
+  - In these runs the controller applied the two parameters the wrong way round: the value labelled *avoidant* drove the ambivalent coupling. `analysis/load.py` corrects the labels.
+
+**To regenerate and record the batches:**
 
 ```bash
-cd /root/mdk/catkin_ws/src/Attachment-Model
-./run_experiments.sh paper     # secure, strongly avoidant, moderately ambivalent; 5 min each
-./run_experiments.sh sweep     # avoidant 0.1-0.8 and ambivalent 0.1-0.8; 3 min each
-./run_experiments.sh run 0.3 0.0 120   # one run: avoidant, ambivalent, seconds
+python3 experiments/make_runs.py                                         # writes the three run lists (stdlib only)
+python3 experiments/run_batch.py experiments/tcds_runs.csv --workers 5   # host side; needs Docker, an X display and ideally a GPU
+py analysis/tcds/check_runs.py                                           # replay every run against its controller
 ```
 
-### Note on the avoidant and ambivalent parameters
+- **How `run_batch.py` runs:** each worker is its own `docker run` of the image, with its own ROS master. Finished runs are moved to the next free data folder.
+- **Resuming:** attempts are logged to `experiments/work/manifest_<list>.csv`, so an interrupted batch resumes when rerun.
+- **Tracked manifests:** `experiments/manifest_tcds_runs*.csv` record the paper's batches, mapping each run id to its folder index.
 
-Until `experiment_data_33` the controller applied the two parameters the wrong way round: the value labelled *ambivalent* drove the avoidant (emotional-distance) coupling and the value labelled *avoidant* drove the ambivalent (physical-distance) coupling. This is fixed for all runs that have a `meta.json` (`"param_mapping": "fixed"`). The analysis scripts correct the labels of the earlier runs when loading them. The four `.pth` networks were trained on the earlier runs.
+### Recorded data
 
-### Project Structure
-
-The ROS package is in `ros/Attachment-Model/` (inside the container: `/root/mdk/catkin_ws/src/Attachment-Model`):
-
-- **Source Code**: `src/`
-  - `subscribers.py` - Subscribers for odometry, ground truth, actions and the emotion parameters
-  - `agents.py` - Shared agent logic and data recording
-  - `child_node.py` - Child robot control script
-  - `parent_node.py` - Parent robot control script
-  - `attachment_model_control.py` - Attachment controller
-  - `perception.py` - AprilTag detection and tracking
-  - `camera_recording.py` - Video recording node
-  - `experiment_timer.py` - Ends a run after its duration and writes `meta.json`
-- **Launch file**: `launch/relationship.launch`
-- **Simulation**: `worlds/attachment.world`, `models/`
-- **Experiment Data**: `data/experiment_data_{index}/`
-
-Analysis scripts are in `analysis/` at the repository root.
-
-## Experimental Data
-
-Pre-collected experimental data is included in the `ros/Attachment-Model/data/` directory. Each experiment folder (`experiment_data_{index}/`) contains:
-- `camera_recording.mp4` - Video recording of the robot interaction
-- `child_data.npy` - Child robot behavioral data
-- `parent_data.npy` - Parent robot behavioral data
-
-### Data Structure
-
-Each `.npy` file contains a dictionary. `child_data.npy` holds the child's series and `parent_data.npy` the parent's; the shared and position keys are in both. One sample is taken every 0.1 s.
+| File | Content |
+|---|---|
+| `meta.json` | Parameters, controller, distance, networks, seed, starting needs, batch, durations, arena geometry (from run 34) |
+| `child_data.npy`, `parent_data.npy` | NumPy dictionaries sampled at 10 Hz (keys below) |
+| `controller_child.npy`, `controller_parent.npy` (`controller_central.npy` for the coupled reference) | Each controller's state, inputs and coupling estimates at every tick (from run 54) |
+| `camera_recording.mp4` | Overhead video |
 
 ```python
 {
-    'Xc': [],                           # Child [need, accumulated need]
-    'Xp': [],                           # Parent [need, accumulated need]
-    'ambivalence': [],                  # Ambivalence parameter values
-    'avoidance': [],                    # Avoidance parameter values
-    'physical_coupling_targets': [],    # Physical distance coupling targets
-    'emotional_coupling_targets': [],   # Emotional distance coupling targets
-    'child_states': [],                 # Child action (0 approach, 1 explore)
-    'parent_states': [],                # Parent action (0 approach, 1 explore)
-    'vocal_child': [],                  # Child vocalization events
-    'vocal_parent': [],                 # Parent vocalization events
-    'child_evidence_trace': [],         # Child evidence accumulation
-    'parent_evidence_trace': [],        # Parent evidence accumulation
-
-    # Recorded from experiment_data_34 onwards
-    'time': [],                         # Simulation time (s)
-    'child_odom': [],                   # Child odometry path [x, y, yaw] in the world frame (m, degrees)
-    'parent_odom': [],                  # Parent odometry path [x, y, yaw] in the world frame
-    'child_odom_raw': [],               # Child odometry as published (starts at 0 in the robot's own frame)
-    'parent_odom_raw': [],              # Parent odometry as published
-    'child_gt': [],                     # Child true position [x, y] from Gazebo (m)
-    'parent_gt': [],                    # Parent true position [x, y] from Gazebo (m)
-    'odom_distance': [],                # Child-parent distance from odometry (m)
-    'odom_distance_norm': [],           # min(1, odom_distance / arena size)
-    'gt_distance': [],                  # Child-parent distance from true positions (m)
-    'gt_distance_norm': []              # min(1, gt_distance / arena size)
+    'Xc', 'Xp',                                      # child / caregiver [need, accumulated need]
+    'ambivalence', 'avoidance',                      # parameter values
+    'physical_coupling_targets', 'emotional_coupling_targets',
+    'child_states', 'parent_states',                 # action: 0 approach, 1 explore
+    'vocal_child', 'vocal_parent',                   # calls
+    'child_evidence_trace', 'parent_evidence_trace', # vocal evidence accumulation
+    # from run 34 on:
+    'time',                                          # simulated time (s)
+    'child_odom', 'parent_odom',                     # odometry [x, y, yaw] in the world frame
+    'child_odom_raw', 'parent_odom_raw',             # odometry as published (robot frame)
+    'child_gt', 'parent_gt',                         # Gazebo ground-truth position [x, y] (m)
+    'odom_distance', 'gt_distance',                  # child-caregiver distance (m)
+    'odom_distance_norm', 'gt_distance_norm',        # min(1, distance / arena size)
 }
 ```
 
-MiRo's wheel odometry starts at zero in each robot's own frame and drifts, most of all when the child pushes against a wall. The odometry path is saved in the world frame using the spawn poses, and the true Gazebo position is saved next to it. See `analysis/figures/improved/odometry_error.png`.
+**Data notes:**
+- **Arena:** 2.61 m wide, centred on the caregiver box at (0.325, 0.325).
+- **Odometry:** wheel odometry drifts by a median 1.06 m per run, so the analyses use ground-truth distances.
+- **What is in git:** `meta.json` for every run from 34 on, plus the arrays and videos of runs 0–53. The arrays and videos of runs 54–724 (about 6.7 GB) are not in the repository because of their size.
 
-The arena is 2.61 m wide, centred on the caregiver box at (0.325, 0.325).
+### Training the networks
 
-### Dataset Organization
+`ros/Attachment-Model/src/attachment_with_nn.ipynb` trains the four coupling networks: physical and emotional distance, for the child and for the caregiver.
+- **Training data:** the agent-based strange situation, against the analytic coupling targets. Only the zero-coupling condition uses a recorded Gazebo run; the others are simulated.
+- **Output:** the `.pth` files next to the notebook, which the controllers load.
+- **How to run it:** in Jupyter in the container; PyTorch is in `/workspace/.venv`.
+- **Evaluation:** `analysis/tcds/estimator_eval.py` evaluates the trained networks in the re-implemented simulator.
+- **Full training details:** the paper's supplementary material.
 
-**Earlier runs, no robot positions** (labels below are as recorded; the two parameters were applied the wrong way round, see the note above):
-- `experiment_data_0` to `16`: training data, 3 minutes per run
-  - `0`: Avoidance = 0.0, Ambivalence = 0.0
-  - `1` to `8`: Avoidance = 0.1 to 0.8, Ambivalence = 0.0
-  - `9` to `16`: Avoidance = 0.0, Ambivalence = 0.1 to 0.8
-- `experiment_data_17` to `33`: experimental data, 1 minute per run, same order as above
+## Reproducing the paper
 
-**Runs with robot paths and `meta.json`** (parameters applied as labelled):
-- `experiment_data_34`: secure, Avoidance = 0.0, Ambivalence = 0.1, 5 minutes
-- `experiment_data_35`: strongly avoidant, Avoidance = 0.9, Ambivalence = 0.0, 5 minutes
-- `experiment_data_36`: moderately ambivalent, Avoidance = 0.0, Ambivalence = 0.4, 5 minutes
-- `experiment_data_37` to `44`: Avoidance = 0.1 to 0.8, Ambivalence = 0.0, 3 minutes
-- `experiment_data_45` to `52`: Avoidance = 0.0, Ambivalence = 0.1 to 0.8, 3 minutes
-- `experiment_data_53`: Avoidance = 0.0, Ambivalence = 0.0, 3 minutes
+Run the scripts from the repository root with `py`, in the order below. Their outputs go to `analysis/tcds/results/`, `figures/` and `tables/`, which are all in git, so any step can be rerun on its own.
 
-In the runs with avoidance 0.5 and above (`35`, `41` to `44`) the oscillator model diverges within the first seconds and the child stays in approach mode next to the caregiver. The same happens in the earlier runs `5`, `14`, `15` and `16`. `analysis/results/run_summary.csv` flags these runs in the `model_diverged` column.
+Steps marked **raw** read the arrays of runs 54 onwards.
 
-## Analysis and Figures
+| # | Command | Computes | Writes (`analysis/tcds/…`) | Paper |
+|---|---|---|---|---|
+| 1 | `py analysis/tcds/canonical.py` | Regimes of the canonical model and of the controllers' form: strips, plane, bifurcation diagrams, steady states | `results/canonical*.npz` | Fig. 2; S2 |
+| 2 | `py analysis/tcds/ssp_sim.py` | Simulated strange situation, five regimes | `results/sim_ssp.npz` | Fig. 3; S3 |
+| 3 | `py analysis/tcds/explore.py` | Coupled vs Decoupled controller along the strips, including the identical start | `results/explore_*.npz` | Fig. 4 |
+| 4 | `py analysis/tcds/robustness.py` | Random starts, plane, identical-start stability, network and notebook ablations | `results/robust_*.npz` | Fig. 4; S2, S5 |
+| 5 | `py analysis/tcds/estimator_eval.py` | Accuracy and input ablations of the learned distances in the training simulator | `results/estimator_eval.npz` | S5 |
+| 6 | `py analysis/tcds/check_runs.py` (raw) | Replays every Gazebo run against its controller | `results/run_checks.csv` | S8 |
+| 7 | `py analysis/tcds/gazebo.py` (raw) | Per-run measures: the three readouts, regimes, behaviour, calls | `results/gazebo_runs.csv` | Figs. 4–6; S5, S6 |
+| 8 | `py analysis/tcds/inverse.py` (raw) | Kinematic stand-in runs and the inverse problem | `results/inverse.npz` | Table I; S6, S7 |
+| 9 | `py analysis/tcds/calibration.py` (raw) | Stand-in speed calibrated on runs outside the test set | `results/calibration.json` | Table I; S6 |
+| 10 | `py analysis/tcds/paper_numbers.py` (raw) | Every number quoted in the paper | `results/numbers.json`, `tables/*.tex` | text, Table I, S tables |
+| 11 | `py analysis/tcds/figures.py [names]` | Every plotted figure. Raw runs are needed for the controller logs, the 900 s runs, the exemplars and odometry | `figures/fig_*.pdf` (+ PNG previews) | Figs. 2–6, supplement |
+| — | `figures/architecture/build.sh` | Architecture diagrams (needs TeX Live, e.g. the `texlive/texlive` image; usage in the script) | `figures/architecture/fig_*.pdf` | Fig. 1, Fig. S1 |
 
-The `analysis/` folder reproduces the robot-experiment analysis of the npj paper (in `papers/`) for this project and adds redesigned versions of the figures. Run it inside the container:
+Notes:
+- **Run order:** steps 1–9 depend only on the code, plus the recorded runs where marked. `paper_numbers.py` and `figures.py` read their results, so run them last.
+- **Supplement numbering:** S2–S8 are the sections of the supplementary material (S2 model forms, S3 simulated strange situation, S5 learned estimates, S6 robot behaviour, S7 inverse study, S8 runs and validation).
+- **The physical-robot strange situation** (paper Section IV, S4) was recorded with a separate physical setup. Those recordings are not in this repository.
+- **Known nondeterminism:** `fig_maps` (supplement S2) marks the majority regime of the Gazebo runs at each parameter pair. Where the runs tie, the marker it picks can change between runs, so this one figure is not byte-reproducible.
 
-```bash
-/workspace/.venv/bin/python /root/analysis/make_figures.py
-```
+## Archive
 
-| Output | Content |
-|---|---|
-| `analysis/figures/paper_style/fig11_trajectory_distance_vocalisation` | Child trajectory, distance and vocalisation per regime (paper Fig. 11) |
-| `analysis/figures/paper_style/fig12_heatmaps` | 50 x 50 occupancy heat maps (paper Fig. 12) |
-| `analysis/figures/paper_style/fig9_trajectory_distance_needs` | Trajectory, distance with vocalisation, needs (paper Fig. 9 layout) |
-| `analysis/figures/paper_style/fig3_correlation_frequency` | Need correlation and oscillation frequency against each parameter (paper Fig. 3) |
-| `analysis/figures/improved/` | Redesigned regime, heat-map, proximity, parameter-sweep and odometry-error figures |
-| `analysis/results/proximity_stats.md` | Time close to the caregiver: chi-squared and Bonferroni-corrected pairwise tests (paper section 6.3) |
-| `analysis/results/run_summary.csv` | One row of measures per run |
+`archive/` keeps code the paper does not use. The code is in git; its outputs, the papers and the notes stay local (`.gitignore`).
 
-Each figure is written as PNG and PDF.
+| Path | Content | In git |
+|---|---|---|
+| `archive/model/ros/` | `plot_graph.py` (a live plot of the needs, never started by the launch file), `read_recorded_data.py` (loader of the early runs, replaced by `analysis/load.py`), `run_experiments.sh` (recorded runs 34–53) | yes |
+| `archive/model/experiments/` | The 60 s pilot runs that preceded the batches: `make_pilot_runs.py`, run lists, manifests; `pilot_data/` and the batch and per-run `logs/` | code and lists only |
+| `archive/analysis/npj_figures/` | `make_figures.py`: npj-style robot figures and proximity statistics of runs 34–53 | code only |
+| `archive/analysis/extra_figures.py` | A Gazebo timeline figure not used in the paper | code only |
+| `archive/analysis/logs/` | Logs of earlier `robustness.py` and `estimator_eval.py` runs | no |
+| `archive/papers/`, `archive/docs/` | Paper drafts, earlier papers and planning notes | no |
 
-- Positions come from Gazebo's true robot position by default, because wheel odometry drifts by more than a metre within a run. Add `--source odom` to use the odometry path instead.
-- "Close to the caregiver" means inside the square centred on the caregiver whose side is half the arena width.
-- Periods when the exploring child stays in one heat-map cell for longer than the mean plus two standard deviations are treated as stuck and excluded, as in the paper.
-- The three regimes are picked by parameter value (`REGIMES` in `make_figures.py`); the longest matching run is used.
+## Reference
 
-## TCDS paper
-
-`papers/tcds/` holds the narrative outline and the draft of the journal paper built on these
-experiments; `analysis/tcds/` holds the scripts behind it. They re-implement the attachment
-controllers outside ROS (`model.py`), read the trained `.pth` networks without PyTorch
-(`nnweights.py`), replay the recorded Gazebo runs, compare the coupled and decoupled
-controllers, evaluate the learned coupling in the notebook's agent simulator
-(`sim_agents.py`), and infer the attachment parameters from behaviour with a kinematic
-stand-in for the Gazebo experiment (`sim_kinematic.py`). See `papers/tcds/README.md`.
-
-## Training the Neural Network
-
-After collecting experimental data, you can train neural networks to learn the coupling functions between parent and child behaviors.
-
-### Training Script Location
-
-The neural network training script is located at:
-```
-/root/mdk/catkin_ws/src/Attachment-Model/src/attachment_with_nn.ipynb
-```
-
-### What the Training Script Does
-
-The training script (`attachment_with_nn.ipynb`) performs the following:
-
-1. **Loads Experimental Data**: Automatically searches and loads all experiment data from the `data` directory
-2. **Data Preparation**: 
-   - Merges child and parent data from multiple experiments
-   - Splits data into training, validation, and test sets (80%/20% split)
-   - Organizes data by parameter values (ambivalence and avoidance levels)
-3. **Network Training**: Trains four neural networks:
-   - Physical coupling for parent behavior
-   - Physical coupling for child behavior
-   - Emotional coupling for parent behavior
-   - Emotional coupling for child behavior
-4. **Model Saving**: Saves trained models as `.pth` files that can be used by the simulation
-
-### How to Use the Training Script
-
-**Option 1: Run in Jupyter Notebook** (Recommended)
-
-If Jupyter is available in the container:
-```bash
-cd /root/mdk/catkin_ws/src/Attachment-Model/src
-jupyter notebook attachment_with_nn.ipynb
-```
-
-**Option 2: Convert to Python Script and Run**
-
-If Jupyter is not available:
-```bash
-cd /root/mdk/catkin_ws/src/Attachment-Model/src
-
-# Convert notebook to Python script
-jupyter nbconvert --to script attachment_with_nn.ipynb
-
-# Run the script
-python attachment_with_nn.py
-```
-
-**Option 3: Open with VS Code**
-
-If you have VS Code attached to the container with the Jupyter extension:
-1. Open the file `attachment_with_nn.ipynb` in VS Code
-2. Select a Python kernel
-3. Run all cells
-
-### Training Configuration
-
-The script can be configured to use either:
-- **Recorded experimental data** (default): `use_recorded = True`
-- **Simulated data**: `use_recorded = False`
-
-To switch between modes, modify the variable in the notebook:
-```python
-# Set to True to use recorded data, False to use simulation
-use_recorded = True
-```
-
-### Saved Model Files
-
-After training completes, the following model files will be saved in the same directory:
-- `physical_parent_coupling_model.pth` - Physical coupling network for parent
-- `physical_child_coupling_model.pth` - Physical coupling network for child
-- `emotional_parent_coupling_model.pth` - Emotional coupling network for parent
-- `emotional_child_coupling_model.pth` - Emotional coupling network for child
-
-These trained models are automatically used by the simulation when you run the experiment.
+[1] A. Htet, A. Jimenez-Rodriguez, M. Gagliardi and T. J. Prescott, "A coupled-oscillator model of human attachment dynamics evaluated in a robot dyadic interaction," in *Biomimetic and Biohybrid Systems* (Living Machines 2024), LNAI 14930, Springer, 2024, pp. 52–67.

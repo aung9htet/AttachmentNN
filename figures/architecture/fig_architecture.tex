@@ -1,0 +1,37 @@
+% Fig. 4: one robot's controller (the child). Compile with pdflatex.
+\documentclass[tikz,border=3pt]{standalone}
+\InputIfFileExists{common.tex}{}{\input{diagrams/common.tex}}
+\begin{document}
+\begin{tikzpicture}[font=\scriptsize]
+\def\xl{1.6} \def\xr{5.4}
+% ---------------------------------------------------------------- learned estimates
+\node[coup, minimum width=2.6cm, minimum height=0.75cm] (phip) at (\xl,0)
+  {$\hat{\Phi}_p$\\[-1pt]{\tiny\color{muted} distance, $x_c$, $y_c$, $\varepsilon_{Am}$}};
+\node[coup, minimum width=2.6cm, minimum height=0.75cm] (phie) at (\xr,0)
+  {$\hat{\Phi}_e$\\[-1pt]{\tiny\color{muted} calls, evidence, $x_c$, $y_c$, $\varepsilon_{Av}$}};
+% ---------------------------------------------------------------- working model
+\node[osc=child, minimum width=2.6cm, minimum height=0.7cm] (own) at (\xl,-1.55) {own $x_c,\,y_c$};
+\node[model=carer, minimum width=2.6cm, minimum height=0.7cm] (mod) at (\xr,-1.55) {model $\hat{x}_p,\,\hat{y}_p$};
+\draw[darr] (own) -- (mod);
+\begin{scope}[on background layer]
+  \node[frame=muted, fit=(own)(mod), inner xsep=5pt, inner ysep=5pt, fill=white] (dyad) {};
+\end{scope}
+\draw[arr] (phip.south) -- node[note, left=1pt] {$d_p$} (phip.south |- dyad.north);
+\draw[arr] (phie.south) -- node[note, right=1pt] {$d_e$} (phie.south |- dyad.north);
+% Baseline variants: analytic coupling on the private copy drives the partner model
+\draw[arr, densely dotted, draw=ink] ($(mod.east)+(1.0,0)$) node[note, text=ink, anchor=south, align=center, yshift=2pt] {analytic\\(Baseline)} -- (mod.east);
+% ---------------------------------------------------------------- behaviour
+\node[box=child, fill=white, minimum width=2.6cm, minimum height=0.55cm] (app) at (\xl,-3.0) {approach ($x_c>0$)};
+\node[box=child, fill=white, minimum width=2.6cm, minimum height=0.55cm] (exp) at (\xr,-3.0) {explore ($x_c<0$)};
+\draw[arr] (own.south |- dyad.south) -- (app.north);
+\draw[arr] (own.south |- dyad.south) -- ++(0,-0.3) -| (exp.north);
+\miro{(3.5,-4.2)}{child}{}
+\draw[arr] (app.south) |- (2.95,-4.2);
+\draw[arr] (exp.south) |- (4.05,-4.2);
+% ---------------------------------------------------------------- sensing (Observed variants)
+\draw[dashed, draw=coupling, line width=0.7pt] (2.95,-4.5) -| (-0.2,0.75) -- (3.5,0.75);
+\draw[arr, dashed, draw=coupling] (\xl,0.75) -- (phip.north);
+\draw[arr, dashed, draw=coupling] (3.5,0.75) -| (phie.north);
+\node[note, text=coupling, rotate=90, anchor=south] at (-0.2,-1.9) {sensed (Observed)};
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,3 @@
+id,batch,controller,distance,avoidant,ambivalent,duration,seed,initial,networks
+P6_baseline_av0.0_am0.2_r1,P6,baseline,,0.0,0.2,60,1,random,
+P6_baseline-observed-gt_av0.2_am0.0_r1,P6,baseline-observed,gt,0.2,0.0,60,1,random,

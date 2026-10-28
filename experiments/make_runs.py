@@ -2,7 +2,7 @@
 """
 Write the run lists for the TCDS validation experiments (stdlib only).
 
-    python3 experiments/make_runs.py        # writes pilot_runs.csv and tcds_runs.csv
+    python3 experiments/make_runs.py        # writes tcds_runs.csv, tcds_runs_e6.csv and tcds_runs_e7.csv
 
 Random starting needs are drawn from the run seed alone (utils.initial_state), so seed s
 gives the same start in every condition and controller: comparisons between controllers
@@ -13,7 +13,7 @@ import csv
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FIELDS = ["id", "batch", "controller", "distance", "avoidant", "ambivalent", "duration", "seed", "initial"]
+FIELDS = ["id", "batch", "controller", "distance", "avoidant", "ambivalent", "duration", "seed", "initial", "networks"]
 VALUES = [round(0.1 * k, 1) for k in range(1, 10)]
 STRIPS = [(0.0, 0.0)] + [(v, 0.0) for v in VALUES] + [(0.0, v) for v in VALUES]
 OFF_AXIS = [(0.1, 0.1), (0.1, 0.2), (0.2, 0.1), (0.2, 0.2), (0.3, 0.1), (0.1, 0.3)]
@@ -21,12 +21,12 @@ RANDOM_SEEDS = [1, 2, 3, 4, 5]
 IDENTICAL_SEEDS = [101, 102, 103]
 
 
-def run(batch, controller, av, am, seed, duration=180, distance="", random_start=True, tag=""):
+def run(batch, controller, av, am, seed, duration=180, distance="", random_start=True, tag="", networks=""):
     initial = "random" if random_start else ""
     rid = (f"{batch}_{controller}{'-' + distance if distance else ''}_av{av:.1f}_am{am:.1f}"
-           f"_{'r' if random_start else 'i'}{seed}{tag}")
+           f"_{'r' if random_start else 'i'}{seed}{tag}{'_' + networks if networks else ''}")
     return dict(id=rid, batch=batch, controller=controller, distance=distance, avoidant=av,
-                ambivalent=am, duration=duration, seed=seed, initial=initial)
+                ambivalent=am, duration=duration, seed=seed, initial=initial, networks=networks)
 
 
 def main_runs():
@@ -53,22 +53,12 @@ def baseline_runs():
     return runs
 
 
-def pilot_runs():
-    d = 60
-    return [
-        run("P", "decoupled", 0.0, 0.2, 7, d, random_start=False, tag="_rep1"),
-        run("P", "decoupled", 0.0, 0.2, 7, d, random_start=False, tag="_rep2"),
-        run("P", "decoupled", 0.2, 0.0, 1, d),
-        run("P", "decoupled", 0.0, 0.2, 1, d),
-        run("P", "coupled", 0.2, 0.0, 1, d),
-        run("P", "coupled", 0.0, 0.2, 1, d),
-        run("P", "observed", 0.2, 0.0, 1, d, distance="gt"),
-        run("P", "observed", 0.0, 0.2, 1, d, distance="gt"),
-        run("P", "observed", 0.0, 0.2, 1, d, distance="odom"),
-        run("P", "notebook", 0.2, 0.0, 1, d, distance="gt"),
-        run("P", "notebook", 0.0, 0.2, 1, d, distance="gt"),
-        run("P", "coupled", 0.0, 0.0, 101, d, random_start=False),
-    ]
+def own_network_runs():
+    """E7: the blind controllers with each robot's own networks, so that the blind and perceiving
+    variants differ only in what the estimates are fed (network-role ablation)."""
+    runs = [run("E7a", "decoupled", av, am, s, networks="own") for av, am in STRIPS for s in RANDOM_SEEDS[:3]]
+    runs += [run("E7b", "baseline", av, am, s, networks="own") for av, am in STRIPS for s in RANDOM_SEEDS[:3]]
+    return runs
 
 
 def write(name, runs):
@@ -86,8 +76,6 @@ def write(name, runs):
 
 
 if __name__ == "__main__":
-    write("pilot_runs.csv", pilot_runs())
     write("tcds_runs.csv", main_runs())
     write("tcds_runs_e6.csv", baseline_runs())
-    write("pilot_runs_e6.csv", [run("P6", "baseline", 0.0, 0.2, 1, 60),
-                                run("P6", "baseline-observed", 0.2, 0.0, 1, 60, distance="gt")])
+    write("tcds_runs_e7.csv", own_network_runs())

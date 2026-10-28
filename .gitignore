@@ -3,16 +3,23 @@ __pycache__/
 .ipynb_checkpoints/
 
 # ---- large or regenerable files kept out of git (they stay on disk) ----
-# Recorded Gazebo runs: videos (4.6 GB) and data arrays (1.0 GB) of runs 54 onwards stay on disk
+# Recorded Gazebo runs: videos (5.5 GB) and data arrays (1.2 GB) of runs 54 onwards stay on disk
 # and are to be archived outside git. Each run's meta.json (parameters, seed, controller) is kept,
 # and the per-run measures are in analysis/tcds/results. Files of runs 0-53 that were committed
 # earlier stay tracked; these rules only stop new ones being added.
 ros/Attachment-Model/data/**/camera_recording.mp4
 ros/Attachment-Model/data/**/*.npy
 
-# TCDS paper: Overleaf packages and preview images are rebuilt by
-# papers/tcds/make_overleaf_zip.sh and analysis/tcds/figures.py
-papers/tcds/draft/overleaf_import/
-papers/tcds/draft/figures/fig_*.png
-papers/tcds/draft/*.bbl
-papers/tcds/draft/diagrams/*.pdf
+# experiments/run_batch.py: worker copies of the package, per-run logs and resume manifests
+experiments/work/
+
+# PNG previews of the paper figures (the PDFs are tracked)
+analysis/tcds/figures/*.png
+
+# ---- archive: the code is tracked; its outputs, the papers and the docs stay local ----
+archive/papers/
+archive/docs/
+archive/**/figures/
+archive/**/results/
+archive/**/logs/
+archive/**/pilot_data/

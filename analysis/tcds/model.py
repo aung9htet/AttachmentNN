@@ -2,7 +2,7 @@
 """
 The attachment controllers re-implemented outside ROS, vectorised over parameter sets.
 
-Three variants (see papers/tcds):
+Three variants (see the repository README):
   coupled   (M1) -- CentralAttachmentController: one integrator holds both agents; the
                     physical and emotional distances are functions of the shared state.
   decoupled (M2) -- IndividualAttachmentController: every agent integrates its own oscillator

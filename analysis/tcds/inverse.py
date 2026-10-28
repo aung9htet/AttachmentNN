@@ -58,9 +58,10 @@ def training_set():
 
 def gazebo_set():
     """Decoupled-controller Gazebo runs on the two strips."""
-    X, Y, idx, seeds, random_start = [], [], [], [], []
+    X, Y, idx, seeds, random_start, bounded = [], [], [], [], [], []
     for r in load_all():
-        if not r.has_positions or r.controller != "decoupled" or min(r.avoidant, r.ambivalent) > 0:
+        if (not r.has_positions or r.controller != "decoupled" or r.networks != "default"
+                or min(r.avoidant, r.ambivalent) > 0):
             continue
         n = min(int(SECONDS * 10), len(r.t))
         X.append(sk.features(r.child_gt[:n], r.parent_gt[:n], r.vocal_child[:n], r.vocal_parent[:n]))
@@ -68,6 +69,8 @@ def gazebo_set():
         idx.append(r.index)
         seeds.append(r.seed)
         random_start.append(r.random_start)
+        bounded.append(not r.diverged)
+    gazebo_set.bounded = np.array(bounded)
     return np.array(X), np.array(Y), np.array(idx), np.array(seeds), np.array(random_start)
 
 
@@ -121,6 +124,10 @@ if __name__ == "__main__":
         acc_by_start = {k: float(np.mean(res["test_pred"][rand == v] == true[rand == v]))
                         for k, v in (("identical", False), ("random", True)) if (rand == v).any()}
         mae = np.abs(res["test_eps"] - Yte[:, :2]).mean(0)
+        # the same predictors on the runs whose needs stayed bounded, against the majority class there
+        ok = gazebo_set.bounded
+        acc_bounded = float(np.mean(res["test_pred"][ok] == true[ok]))
+        mae_bounded = np.abs(res["test_eps"][ok] - Yte[ok, :2]).mean(0)
         cv_pred = gazebo_cv(Xte, Yte, seeds, cols)
         cv_acc = float(np.mean(cv_pred == true))
         print(f"{name}: sim CV {res['cv_acc']:.3f} | Gazebo transfer {acc:.3f} ({int(round(acc * len(true)))}/{len(true)}; "
@@ -134,8 +141,19 @@ if __name__ == "__main__":
         out[f"{name}/test_acc_identical"] = acc_by_start.get("identical", np.nan)
         out[f"{name}/test_acc_random"] = acc_by_start.get("random", np.nan)
         out[f"{name}/test_mae"] = mae
+        out[f"{name}/test_acc_bounded"] = acc_bounded
+        out[f"{name}/test_mae_bounded"] = mae_bounded
+        print(f"  bounded runs only ({ok.sum()}): accuracy {acc_bounded:.3f}, MAE {mae_bounded.round(3)}")
         out[f"{name}/confusion"] = confusion(true, res["test_pred"])
         out[f"{name}/gazebo_cv_pred"] = cv_pred
         out[f"{name}/gazebo_cv_acc"] = cv_acc
         out[f"{name}/gazebo_cv_confusion"] = confusion(true, cv_pred)
+    counts = np.bincount(true, minlength=3)
+    counts_bounded = np.bincount(true[gazebo_set.bounded], minlength=3)
+    out["test_counts"], out["test_counts_bounded"] = counts, counts_bounded
+    out["majority"] = counts.max() / counts.sum()
+    out["majority_bounded"] = counts_bounded.max() / counts_bounded.sum()
+    out["gazebo_bounded"] = gazebo_set.bounded
+    print(f"test classes {counts} (majority {out['majority']:.3f}); bounded {counts_bounded} "
+          f"(majority {out['majority_bounded']:.3f})")
     np.savez(os.path.join(HERE, "results", "inverse.npz"), **out)

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Figures for the TCDS draft (papers/tcds/draft/figures), sized for an IEEE two-column page.
+Figures of the TCDS paper, written to analysis/tcds/figures (PDF, with PNG previews), sized for an
+IEEE two-column page.
 
-Run after explore.py, robustness.py, estimator_eval.py, gazebo.py and inverse.py:
-    python3 analysis/tcds/figures.py [names]
+Run after canonical.py, ssp_sim.py, explore.py, robustness.py, estimator_eval.py, gazebo.py and inverse.py:
+    python3 analysis/tcds/figures.py [names]       # no names: every figure
 """
 import os
 import sys
@@ -18,19 +19,17 @@ from matplotlib.lines import Line2D
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ANALYSIS = os.path.dirname(HERE)
-REPO = os.path.dirname(ANALYSIS)
 sys.path.insert(0, ANALYSIS)
 
 from load import load_all          # noqa: E402
 import metrics                     # noqa: E402
-import make_figures as mf          # noqa: E402
 import model                       # noqa: E402
 import sim_kinematic as sk         # noqa: E402
 import gazebo as gz                # noqa: E402
 import csv                         # noqa: E402
 from scipy import stats            # noqa: E402
 
-OUT = os.path.join(REPO, "papers", "tcds", "draft", "figures")
+OUT = os.path.join(HERE, "figures")
 RES = os.path.join(HERE, "results")
 
 # IEEE geometry (inches) and the validated categorical palette (print, white surface)
@@ -82,13 +81,13 @@ NOUN = {"avoidant": r"avoidance $\varepsilon_{Av}$", "ambivalent": r"ambivalence
 
 # controller modes: (controller, distance) -> (label, colour, line style, marker)
 MODES = {
-    ("coupled", ""): ("shared needs", MUTED, "-", "s"),
-    ("decoupled", ""): ("blind, self-propagated", DECOUPLED, "-", "o"),
-    ("observed", "gt"): ("perceiving, self-propagated", CHILD, "-", "^"),
-    ("observed", "odom"): ("perceiving (odometry), self-propagated", CHILD, "--", "v"),
-    ("baseline", ""): ("blind, reference", "#6250d6", "-", "D"),
-    ("baseline-observed", "gt"): ("perceiving, reference (anchored)", CAREGIVER, "-", "P"),
-    ("notebook", "gt"): ("perceiving, no partner model", "#eda100", "-", "X"),
+    ("coupled", ""): ("Coupled reference", MUTED, "-", "s"),
+    ("decoupled", ""): ("Decoupled", DECOUPLED, "-", "o"),
+    ("observed", "gt"): ("Observed", CHILD, "-", "^"),
+    ("observed", "odom"): ("Observed (odometry)", CHILD, "--", "v"),
+    ("baseline", ""): ("Baseline", "#6250d6", "-", "D"),
+    ("baseline-observed", "gt"): ("Baseline-observed", CAREGIVER, "-", "P"),
+    ("notebook", "gt"): ("Notebook", "#eda100", "-", "X"),
 }
 
 
@@ -104,11 +103,13 @@ def gazebo_table():
         rows = list(csv.DictReader(f))
     for r in rows:
         for k in ("avoidant", "ambivalent", "near", "mean_distance", "child_calling", "carer_calling",
-                  "reciprocity", "r", "belief_c", "track_r", "track_rmse", "est_r_c", "est_r_p", "duration",
+                  "reciprocity", "r", "belief_c", "track_r", "track_rmse", "track_rmse_x", "est_r_c", "est_r_p", "duration",
                   "f_own_c", "f_model", "f_partner", "detune_own", "detune_model"):
             r[k] = _num(r.get(k))
         r["seed"] = int(r["seed"])
         r["index"] = int(r["index"])
+        if r.get("networks") == "own":       # sensing ablation: open-loop robots with their own role's networks
+            r["controller"] += "-own"
     return rows
 
 
@@ -187,20 +188,20 @@ def fig_strips():
     fig, axes = plt.subplots(2, 2, figsize=(DCOL, 2.95), sharex=True, gridspec_kw=dict(height_ratios=[2.1, 1]))
     for col, axis in enumerate(("avoidant", "ambivalent")):
         ax = axes[0, col]
-        median_band(ax, rand[f"{axis}/coupled/r"], v, MUTED, label="shared needs, random starts")
-        median_band(ax, rand[f"{axis}/decoupled/r"], v, DECOUPLED, label="private models, random starts")
+        median_band(ax, rand[f"{axis}/coupled/r"], v, MUTED, label="Coupled reference, random starts")
+        median_band(ax, rand[f"{axis}/decoupled/r"], v, DECOUPLED, label="Decoupled, random starts")
         ax.plot(ident["values"], ident[f"{axis}/decoupled_learned/r"], color=DECOUPLED, ls="--", lw=1.0,
-                label="private models, identical start")
+                label="Decoupled, identical start")
         belief = rand[f"{axis}/decoupled/belief_c"]
         ok = np.isfinite(belief).mean(1) >= 0.5
         ax.plot(v[ok], np.nanmedian(belief[ok], axis=1), color=DECOUPLED, ls=":", lw=1.1,
-                label=r"private models: belief $r(x_c,\hat{x}_p)$")
+                label=r"Decoupled: internal $r(x_c,\hat{x}_p)$")
         plot_points(ax, by_value(select(rows, "coupled", "random", axis), axis, "r"), MUTED, "s", -0.012,
-                    label="Gazebo, shared needs (random starts)")
+                    label="Gazebo, Coupled reference")
         plot_points(ax, by_value(select(rows, "decoupled", "random", axis), axis, "r"), DECOUPLED, "o", 0.0,
-                    label="Gazebo, private models (random starts)")
+                    label="Gazebo, Decoupled (random)")
         plot_points(ax, by_value(select(rows, "decoupled", "identical", axis), axis, "r"), DECOUPLED, "o", 0.012,
-                    hollow=True, label="Gazebo, private models (identical start)")
+                    hollow=True, label="Gazebo, Decoupled (identical)")
         ax.axhline(0, color=FAINT, lw=0.5)
         ax.set_ylim(-1.1, 1.1)
         ax.set_ylabel("need correlation $r(x_c, x_p)$")
@@ -256,7 +257,7 @@ def fig_belief():
     panel(ax, "a", rf"Gazebo run {run.index}: $\varepsilon_{{Am}}=0.2$, random start")
     v = long["values"]
     for ax, axis, letter in ((axes[1], "avoidant", "b"), (axes[2], "ambivalent", "c")):
-        for key, color, ls, label in (("belief_c", DECOUPLED, ":", r"belief $r(x_c,\hat{x}_p)$"),
+        for key, color, ls, label in (("belief_c", DECOUPLED, ":", r"internal $r(x_c,\hat{x}_p)$"),
                                       ("r", DECOUPLED, "-", r"coordination $r(x_c,x_p)$"),
                                       ("track_r", CAREGIVER, "-.", r"partner tracking $r(\hat{x}_p,x_p)$")):
             vals = long[f"{axis}/decoupled/{key}"]
@@ -264,7 +265,7 @@ def fig_belief():
             ax.plot(v[ok], np.nanmedian(vals[ok], axis=1), color=color, ls=ls, label=label)
         cvals = long[f"{axis}/coupled/r"]
         ok = np.isfinite(cvals).mean(1) >= 0.5
-        ax.plot(v[ok], np.nanmedian(cvals[ok], axis=1), color=MUTED, lw=0.9, label="shared needs: coordination")
+        ax.plot(v[ok], np.nanmedian(cvals[ok], axis=1), color=MUTED, lw=0.9, label="Coupled reference: realised")
         ax.axhline(0, color=FAINT, lw=0.5)
         ax.set_ylim(-1.1, 1.1); ax.set_xlim(-0.02, 0.8); ax.set_xlabel(NOUN[axis])
         if axis == "avoidant":
@@ -311,7 +312,7 @@ def fig_maps():
     edges = np.concatenate([v - step / 2, [v[-1] + step / 2]])
     fig, axes = plt.subplots(1, 2, figsize=(DCOL * 0.8, 2.6), sharey=True)
     for ax, kind, letter, title in zip(axes, ("coupled", "decoupled"), "ab",
-                                       ("Shared needs", "Private models (blind, self-propagated)")):
+                                       ("Coupled reference", "Decoupled")):
         esc = g[f"{kind}/escaped"].astype(bool)
         quench = ((g[f"{kind}/freq_c"] == 0) | (g[f"{kind}/freq_p"] == 0)) & ~esc
         osc = ~esc & ~quench
@@ -406,45 +407,65 @@ def fig_estimation():
 # ---------------------------------------------------------------- Fig: anchoring the partner model (R4)
 
 ANCHOR_DESIGNS = [("coupled", ""), ("decoupled", ""), ("observed", "gt"), ("baseline", ""), ("baseline-observed", "gt")]
+# the variants of the three-readouts figure, with the network-assignment ablation next to its variant
+READOUT_VARIANTS = [("coupled", ""), ("decoupled", ""), ("decoupled-own", ""), ("observed", "gt"), ("baseline", ""),
+                    ("baseline-own", ""), ("baseline-observed", "gt")]
+READOUT_SHORT = {("coupled", ""): "Coupled", ("decoupled", ""): "Decoupled", ("decoupled-own", ""): "own nets",
+                 ("observed", "gt"): "Observed", ("baseline", ""): "Baseline", ("baseline-own", ""): "own nets",
+                 ("baseline-observed", "gt"): "Baseline-obs."}
+
+
+def readout_runs(rows, controller, distance):
+    """Random-start runs under ambivalence, 0.1 <= eps_Am <= 0.4, that did not escape."""
+    return [r for r in select(rows, controller, "random", "ambivalent", distance)
+            if 0 < r["ambivalent"] <= 0.4 and r["regime"] != "escaped"]
 
 
 def fig_anchoring():
-    """Per-run values pooled over 0.1 <= eps_Am <= 0.4 (runs that did not escape), by design."""
+    """The three readouts by variant, per-run values pooled over 0.1 <= eps_Am <= 0.4 (runs that did not escape)."""
     rows = gazebo_table()
-    short = {("coupled", ""): "shared needs", ("decoupled", ""): "blind / self", ("observed", "gt"): "perceiving / self",
-             ("baseline", ""): "blind / reference", ("baseline-observed", "gt"): "perceiving / reference"}
-    panels = [("r", r"need correlation $r(x_c, x_p)$", "Coordination", True),
-              ("track_r", r"$r(\hat{x}_p, x_p)$", "Partner tracking", False),
+    panels = [("est_r_c", r"$r(d,\ \Phi(\mathrm{true}))$", "Target", False),
+              ("track_r", r"$r(\hat{x}_p, x_p)$", "Tracking", False),
+              ("track_rmse_x", r"RMSE of $\hat{x}_p$", "Tracking error", False),
               ("detune_model", r"$|f(\hat{x}_p) - f(x_p)|$ (mHz)", "Detuning", False),
-              ("est_r_c", "estimate vs true coupling ($r$)", "Estimate accuracy", False),
-              ("reciprocity", "call reciprocity", "Reciprocity", True)]
+              ("r", r"$r(x_c, x_p)$", "Realised", True),
+              ("reciprocity", "fraction of child calls", "Reciprocity", True)]
+    variants = [v for v in READOUT_VARIANTS if readout_runs(rows, *v)]
     rng = np.random.default_rng(0)
-    fig, axes = plt.subplots(1, 5, figsize=(DCOL, 2.45))
-    for ax, (key, ylabel, title, with_coupled), letter in zip(axes, panels, "abcde"):
-        designs = [d for d in ANCHOR_DESIGNS if with_coupled or d[0] != "coupled"]
-        for k, (controller, distance) in enumerate(designs):
-            label, color, ls, marker = MODES[(controller, distance)]
-            runs = [r for r in select(rows, controller, "random", "ambivalent", distance)
-                    if 0 < r["ambivalent"] <= 0.4 and r["regime"] != "escaped"]
+    fig, axes = plt.subplots(1, 6, figsize=(DCOL, 2.05))
+    handles = {}
+    for ax, (key, ylabel, title, with_coupled), letter in zip(axes, panels, "abcdef"):
+        for k, (controller, distance) in enumerate(variants):
+            if controller == "coupled" and not with_coupled:
+                continue
+            own = controller.endswith("-own")
+            label, color, ls, marker = MODES[(controller[:-4] if own else controller, distance)]
+            runs = readout_runs(rows, controller, distance)
             v = np.array([r[key] for r in runs], float)
             v = v[np.isfinite(v)] * (1000 if key == "detune_model" else 1)
-            ax.plot(k + rng.uniform(-0.18, 0.18, len(v)), v, marker, ms=2.4, color=color, alpha=0.45, mew=0, ls="")
+            style = dict(marker=marker, ms=2.4, ls="", alpha=0.6, mfc="none" if own else color, mec=color,
+                         mew=0.6 if own else 0)
+            ax.plot(k + rng.uniform(-0.2, 0.2, len(v)), v, **style)
             m, ci = mean_ci(v)
-            ax.errorbar([k], [m], yerr=[ci], fmt="_", ms=12, mew=1.6, color=INK, elinewidth=1.0, capsize=2.5, zorder=6)
-        ax.set_xticks(range(len(designs)))
-        ax.set_xticklabels([short[d] for d in designs], fontsize=5.8, rotation=35, ha="right",
-                           rotation_mode="anchor")
-        ax.set_xlim(-0.6, len(designs) - 0.4)
+            ax.errorbar([k], [m], yerr=[ci], fmt="_", ms=8, mew=1.4, color=INK, elinewidth=0.9, capsize=2, zorder=6)
+            name = label + (", own networks" if own else "")
+            handles[name] = Line2D([], [], **dict(style, ms=4, alpha=1), label=f"{name} ($n={len(runs)}$)")
+        ax.set_xticks([])
+        ax.set_xlim(-0.6, len(variants) - 0.4)
         if key in ("r", "track_r", "est_r_c"):
             ax.axhline(0, color=FAINT, lw=0.5)
             ax.set_ylim(-1.1, 1.1)
         elif key == "reciprocity":
             ax.set_ylim(-0.03, 1.05)
-        ax.set_ylabel(ylabel)
+        else:
+            ax.set_ylim(bottom=0)
+        ax.set_ylabel(ylabel, labelpad=1)
         tidy(ax)
         panel(ax, letter, title)
         ax.title.set_fontsize(7)
-    fig.tight_layout(w_pad=0.9)
+    fig.legend(handles=list(handles.values()), loc="lower center", ncol=4, fontsize=6, frameon=False,
+               handletextpad=0.2, columnspacing=1.0, bbox_to_anchor=(0.5, -0.02))
+    fig.tight_layout(w_pad=0.5, rect=(0, 0.17, 1, 1))
     save(fig, "fig_anchoring")
 
 
@@ -453,10 +474,10 @@ def fig_anchoring():
 def fig_long():
     runs = [r for r in load_all() if r.batch == "E4"]
     fig, axes = plt.subplots(1, 2, figsize=(DCOL, 2.0), sharex=True)
-    styles = {("coupled", 0.2, 0.0): (MUTED, "-", "shared needs, avoidance 0.2"),
-              ("coupled", 0.0, 0.2): (MUTED, "--", "shared needs, ambivalence 0.2"),
-              ("decoupled", 0.2, 0.0): (DECOUPLED, "-", "private models, avoidance 0.2"),
-              ("decoupled", 0.0, 0.2): (DECOUPLED, "--", "private models, ambivalence 0.2")}
+    styles = {("coupled", 0.2, 0.0): (MUTED, "-", "Coupled reference, avoidance 0.2"),
+              ("coupled", 0.0, 0.2): (MUTED, "--", "Coupled reference, ambivalence 0.2"),
+              ("decoupled", 0.2, 0.0): (DECOUPLED, "-", "Decoupled, avoidance 0.2"),
+              ("decoupled", 0.0, 0.2): (DECOUPLED, "--", "Decoupled, ambivalence 0.2")}
     seen = set()
     for r in sorted(runs, key=lambda x: (x.controller, x.avoidant, x.seed)):
         color, ls, label = styles[(r.controller, r.avoidant, r.ambivalent)]
@@ -469,7 +490,7 @@ def fig_long():
     axes[0].set_ylabel("call reciprocity"); axes[0].set_ylim(-0.03, 1.05)
     axes[1].set_ylabel("need correlation $r(x_c,x_p)$"); axes[1].set_ylim(-1.1, 1.1)
     axes[1].axhline(0, color=FAINT, lw=0.5)
-    for ax, letter, title in ((axes[0], "a", "Caregiver answers to the child's calls"),
+    for ax, letter, title in ((axes[0], "a", "Call reciprocity"),
                               (axes[1], "b", "Coordination of the needs")):
         ax.set_xlabel("time (s), 120 s windows")
         ax.set_xlim(0, 900)
@@ -485,11 +506,11 @@ def fig_long():
 
 # (batch, controller, avoidance, ambivalence, seed, title)
 EXEMPLARS = [
-    ("E2", "coupled", 0.2, 0.0, 1, "Shared needs, avoidance 0.2"),
-    ("E1r", "decoupled", 0.2, 0.0, 1, "Private models, avoidance 0.2"),
-    ("E2", "coupled", 0.0, 0.2, 1, "Shared needs, ambivalence 0.2"),
-    ("E1r", "decoupled", 0.0, 0.2, 1, "Private models, ambivalence 0.2"),
-    ("E1r", "decoupled", 0.0, 0.7, 1, "Private models, ambivalence 0.7"),
+    ("E2", "coupled", 0.2, 0.0, 1, "Coupled reference, avoidance 0.2"),
+    ("E1r", "decoupled", 0.2, 0.0, 1, "Decoupled, avoidance 0.2"),
+    ("E2", "coupled", 0.0, 0.2, 1, "Coupled reference, ambivalence 0.2"),
+    ("E1r", "decoupled", 0.0, 0.2, 1, "Decoupled, ambivalence 0.2"),
+    ("E1r", "decoupled", 0.0, 0.7, 1, "Decoupled, ambivalence 0.7"),
 ]
 
 
@@ -508,15 +529,15 @@ def fig_gazebo_regimes():
     fig = plt.figure(figsize=(DCOL, 7.0))
     gs = fig.add_gridspec(len(EXEMPLARS), 2, width_ratios=[1, 3.6], hspace=0.75, wspace=0.18)
     for k, (r, row, title) in enumerate(exemplar_runs()):
-        a = mf.analyse(r, "gt")
+        a = metrics.analyse(r, "gt")
         n = min(len(r.t), 1800)
         t = r.t[:n]
         ax = fig.add_subplot(gs[k, 0])
         child = a["child"][:n]
         ax.plot(child[:, 0], child[:, 1], color=CHILD, lw=0.7)
         ax.plot(*child[0], "o", color=CHILD, ms=3)
-        low, high = mf.arena_limits(r)
-        half = mf.half_square(r)
+        low, high = metrics.arena_limits(r)
+        half = metrics.half_square(r)
         centre = a["parent"][:n].mean(axis=0)
         ax.add_patch(Rectangle(low, r.arena_size, r.arena_size, fill=False, lw=0.6, edgecolor=FAINT))
         ax.add_patch(Rectangle(centre - half, 2 * half, 2 * half, fill=False, ls=":", lw=0.7, edgecolor=MUTED))
@@ -530,15 +551,15 @@ def fig_gazebo_regimes():
         ax.text(0.0, -0.08, f"run {r.index}, seed {r.seed}", transform=ax.transAxes, fontsize=5.8, color=MUTED, va="top")
         ax = fig.add_subplot(gs[k, 1])
         dist = a["distance"][:n]
-        for s0, s1 in mf.spans(r.child_state[:n] == 0, t):
+        for s0, s1 in metrics.spans(r.child_state[:n] == 0, t):
             ax.axvspan(s0, s1 + 0.1, color="#e8f0fb", lw=0, zorder=0)
-        for s0, s1 in mf.spans(a["stuck"][:n], t):
+        for s0, s1 in metrics.spans(a["stuck"][:n], t):
             ax.axvspan(s0, s1 + 0.1, facecolor="none", hatch="////", edgecolor=FAINT, lw=0, zorder=0)
         ax.plot(t, dist, color=INK, lw=0.8)
         top = max(1.45, np.nanmax(dist) + 0.1)
         for y, series, col, lab in ((top + 0.14, r.vocal_child[:n], CHILD, "child calls"),
                                     (top + 0.46, r.vocal_parent[:n], CAREGIVER, "caregiver calls")):
-            for s0, s1 in mf.spans(series > 0, t):
+            for s0, s1 in metrics.spans(series > 0, t):
                 ax.plot([s0, s1 + 0.1], [y, y], color=col, lw=3.2, solid_capstyle="butt")
             ax.text(181, y, lab, fontsize=5.6, va="center", color=MUTED)
         recip = row["reciprocity"]
@@ -564,63 +585,15 @@ def fig_gazebo_regimes():
     save(fig, "fig_gazebo_regimes")
 
 
-def fig_gazebo_timelines():
-    """2 x 2 exemplar timelines at eps = 0.2: shared needs vs private models (columns), avoidance vs
-    ambivalence (rows), same random start (main text)."""
-    runs = exemplar_runs()[:4]                       # shared/private x avoidance/ambivalence
-    order = [(0, 0), (0, 1), (1, 0), (1, 1)]         # (row, col) of each exemplar in EXEMPLARS order
-    fig, axes = plt.subplots(2, 2, figsize=(DCOL, 2.55), sharex=True, sharey=True)
-    for (r, row, title), (i, j) in zip(runs, order):
-        ax = axes[i, j]
-        a = mf.analyse(r, "gt")
-        n = min(len(r.t), 1800)
-        t = r.t[:n]
-        dist = a["distance"][:n]
-        for s0, s1 in mf.spans(r.child_state[:n] == 0, t):
-            ax.axvspan(s0, s1 + 0.1, color="#e8f0fb", lw=0, zorder=0)
-        ax.plot(t, dist, color=INK, lw=0.8)
-        top = 1.5
-        for y, series, col in ((top + 0.12, r.vocal_child[:n], CHILD), (top + 0.4, r.vocal_parent[:n], CAREGIVER)):
-            for s0, s1 in mf.spans(series > 0, t):
-                ax.plot([s0, s1 + 0.1], [y, y], color=col, lw=2.6, solid_capstyle="butt")
-        ax.set_xlim(0, 180); ax.set_ylim(0, top + 0.55)
-        ax.set_yticks([0, 0.5, 1.0, 1.5])
-        if j == 0:
-            ax.set_ylabel("distance (m)", fontsize=6.5)
-        if i == 1:
-            ax.set_xlabel("time (s)")
-        tidy(ax)
-        recip = row["reciprocity"]
-        design, coupling = title.split(", ")
-        panel(ax, "abcd"[2 * i + j], coupling.capitalize())
-        ax.title.set_fontsize(7)
-        ax.text(1.0, 1.035, f"coordination {row['r']:+.2f}, reciprocity "
-                            f"{'n/a' if not np.isfinite(recip) else f'{recip:.2f}'}",
-                transform=ax.transAxes, fontsize=6, color=MUTED, ha="right", va="bottom")
-    handles = [Line2D([], [], color=INK, lw=0.8, label="child–caregiver distance"),
-               Patch(facecolor="#e8f0fb", label="child in approach"),
-               Line2D([], [], color=CHILD, lw=2.6, label="child calls"),
-               Line2D([], [], color=CAREGIVER, lw=2.6, label="caregiver calls")]
-    fig.tight_layout(h_pad=0.8, w_pad=1.0)
-    fig.subplots_adjust(top=0.86)
-    for j, design in enumerate(("Shared needs", "Private models")):
-        pos = axes[0, j].get_position()
-        fig.text((pos.x0 + pos.x1) / 2, 0.975, design, ha="center", va="top", fontsize=7.5, color=INK, fontweight="bold")
-    fig.legend(handles=handles, loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.07), fontsize=6.2)
-    save(fig, "fig_gazebo_timelines")
-
-
 # ---------------------------------------------------------------- Fig: dynamics of the coupled-oscillator model (npj Section 4)
 
-def _dynamics_figure(form, name):
-    c = np.load(os.path.join(RES, "canonical.npz" if form == "canonical" else "canonical_distance.npz"))
-    colours = {"avoidant": CHILD, "ambivalent": CAREGIVER}
-    fig = plt.figure(figsize=(DCOL, 3.15))
-    gs = fig.add_gridspec(2, 3, width_ratios=[1, 1, 1.25], hspace=0.62, wspace=0.42)
+STRIP_COLOURS = {"avoidant": CHILD, "ambivalent": CAREGIVER}
+
+
+def _correlation_panel(ax, c, letter, legend_anchor=(0.62, 0.62), legend_cols=1):
+    """Correlation of the two needs along the strips: random starts (median, IQR) and the anti-synchronised start."""
     v = c["strips/values"]
-    # (a) correlation, random starts (median, IQR) and the anti-synchronised start
-    ax = fig.add_subplot(gs[0, 0])
-    for axis, col in colours.items():
+    for axis, col in STRIP_COLOURS.items():
         rr = c[f"strips/{axis}/random/r"]
         ok = np.isfinite(rr).mean(1) >= 0.5
         q = np.nanpercentile(rr[ok], [25, 50, 75], axis=1)
@@ -630,37 +603,13 @@ def _dynamics_figure(form, name):
         ax.plot(v, anti, color=col, ls="--", lw=0.8)
     ax.axhline(0, color=FAINT, lw=0.5); ax.set_ylim(-1.1, 1.1); ax.set_xlim(0, 1)
     ax.set_xlabel(r"coupling $\varepsilon$"); ax.set_ylabel(r"need correlation $r(x_c,x_p)$")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.62, 0.62), fontsize=5.8, handlelength=1.4)
-    tidy(ax); panel(ax, "a", "Correlation"); ax.title.set_fontsize(7)
-    # (b) frequency of the child's need, random starts
-    ax = fig.add_subplot(gs[0, 1])
-    for axis, col in colours.items():
-        ff = c[f"strips/{axis}/random/freq"] * 100
-        ok = np.isfinite(ff).mean(1) >= 0.5
-        ax.plot(v[ok], np.nanmedian(ff[ok], 1), color=col, lw=1.1)
-    ax.set_xlim(0, 1); ax.set_ylim(bottom=0)
-    ax.set_xlabel(r"coupling $\varepsilon$"); ax.set_ylabel("cycles per 100 time units")
-    tidy(ax); panel(ax, "b", "Frequency"); ax.title.set_fontsize(7)
-    # (c,d) bifurcation diagrams: x_p at upward crossings of y_c = 0, and steady states
-    pv = c["poincare/values"]
-    for k, axis in enumerate(("ambivalent", "avoidant")):
-        ax = fig.add_subplot(gs[1, k])
-        counts = c[f"poincare/{axis}/counts"]
-        pts = c[f"poincare/{axis}/points"]
-        xs = np.repeat(pv, counts)
-        ax.plot(xs, pts, ",", color=colours[axis], alpha=0.6, rasterized=True)
-        ax.plot(xs, pts, "o", ms=0.4, color=colours[axis], alpha=0.5, mew=0, rasterized=True)
-        final = c[f"poincare/{axis}/final"][:, 2]
-        steady = counts == 0
-        esc = c[f"poincare/{axis}/escaped"]
-        ax.plot(pv[steady & ~esc], final[steady & ~esc], ".", ms=1.2, color=INK)
-        if esc.any():
-            ax.plot(pv[esc], np.full(esc.sum(), 1.05), "x", ms=2, color=MUTED, mew=0.5)
-        ax.set_xlim(0, 1); ax.set_ylim(-1.15, 1.15)
-        ax.set_xlabel(NOUN[axis]); ax.set_ylabel(r"$x_p$ at $y_c=0$")
-        tidy(ax); panel(ax, "cd"[k], "Bifurcation, " + NOUN[axis].split(" ")[0]); ax.title.set_fontsize(7)
-    # (e) relative phase over the plane, anti-synchronised start
-    ax = fig.add_subplot(gs[:, 2])
+    ax.legend(loc="upper center", bbox_to_anchor=legend_anchor, ncol=legend_cols, fontsize=5.8, handlelength=1.4)
+    tidy(ax); panel(ax, letter, "Correlation"); ax.title.set_fontsize(7)
+
+
+def _phase_panel(fig, ax, c, letter, legend_anchor=(0.45, -0.17)):
+    """Mean relative phase over the plane from the anti-synchronised start, with steady states, escapes and
+    irregular oscillation marked."""
     pl = c["plane/values"]; step = pl[1] - pl[0]
     phase = np.where(c["plane/regime"] == 0, c["plane/phase"], np.nan)
     im = ax.imshow(phase.T, origin="lower", extent=(-step / 2, 1 + step / 2, -step / 2, 1 + step / 2),
@@ -679,12 +628,50 @@ def _dynamics_figure(form, name):
     ax.set_xlabel(NOUN["avoidant"]); ax.set_ylabel(NOUN["ambivalent"])
     cb = fig.colorbar(im, ax=ax, fraction=0.05, pad=0.03, ticks=[0, 90, 180])
     cb.set_label("relative phase (deg)", fontsize=6.2); cb.ax.tick_params(labelsize=6)
-    panel(ax, "e", "Relative phase"); ax.title.set_fontsize(7)
+    panel(ax, letter, "Relative phase"); ax.title.set_fontsize(7)
     handles = [Patch(facecolor=QUENCH, label="steady state"),
                Patch(facecolor="white", hatch="////", edgecolor=FAINT, label="escape"),
                Line2D([], [], marker=".", ls="", color=INK, label="irregular")]
-    ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.45, -0.17), ncol=3, fontsize=5.6,
+    ax.legend(handles=handles, loc="upper center", bbox_to_anchor=legend_anchor, ncol=3, fontsize=5.6,
               handlelength=1.2, columnspacing=0.6)
+
+
+def _dynamics_figure(form, name):
+    c = np.load(os.path.join(RES, "canonical.npz" if form == "canonical" else "canonical_distance.npz"))
+    fig = plt.figure(figsize=(DCOL, 3.15))
+    gs = fig.add_gridspec(2, 3, width_ratios=[1, 1, 1.25], hspace=0.62, wspace=0.42)
+    v = c["strips/values"]
+    # (a) correlation, random starts (median, IQR) and the anti-synchronised start
+    _correlation_panel(fig.add_subplot(gs[0, 0]), c, "a")
+    # (b) frequency of the child's need, random starts
+    ax = fig.add_subplot(gs[0, 1])
+    for axis, col in STRIP_COLOURS.items():
+        ff = c[f"strips/{axis}/random/freq"] * 100
+        ok = np.isfinite(ff).mean(1) >= 0.5
+        ax.plot(v[ok], np.nanmedian(ff[ok], 1), color=col, lw=1.1)
+    ax.set_xlim(0, 1); ax.set_ylim(bottom=0)
+    ax.set_xlabel(r"coupling $\varepsilon$"); ax.set_ylabel("cycles per 100 time units")
+    tidy(ax); panel(ax, "b", "Frequency"); ax.title.set_fontsize(7)
+    # (c,d) bifurcation diagrams: x_p at upward crossings of y_c = 0, and steady states
+    pv = c["poincare/values"]
+    for k, axis in enumerate(("ambivalent", "avoidant")):
+        ax = fig.add_subplot(gs[1, k])
+        counts = c[f"poincare/{axis}/counts"]
+        pts = c[f"poincare/{axis}/points"]
+        xs = np.repeat(pv, counts)
+        ax.plot(xs, pts, ",", color=STRIP_COLOURS[axis], alpha=0.6, rasterized=True)
+        ax.plot(xs, pts, "o", ms=0.4, color=STRIP_COLOURS[axis], alpha=0.5, mew=0, rasterized=True)
+        final = c[f"poincare/{axis}/final"][:, 2]
+        steady = counts == 0
+        esc = c[f"poincare/{axis}/escaped"]
+        ax.plot(pv[steady & ~esc], final[steady & ~esc], ".", ms=1.2, color=INK)
+        if esc.any():
+            ax.plot(pv[esc], np.full(esc.sum(), 1.05), "x", ms=2, color=MUTED, mew=0.5)
+        ax.set_xlim(0, 1); ax.set_ylim(-1.15, 1.15)
+        ax.set_xlabel(NOUN[axis]); ax.set_ylabel(r"$x_p$ at $y_c=0$")
+        tidy(ax); panel(ax, "cd"[k], "Bifurcation, " + NOUN[axis].split(" ")[0]); ax.title.set_fontsize(7)
+    # (e) relative phase over the plane, anti-synchronised start
+    _phase_panel(fig, fig.add_subplot(gs[:, 2]), c, "e")
     save(fig, name)
 
 
@@ -696,19 +683,56 @@ def fig_canonical_distance():
     _dynamics_figure("distance", "fig_canonical_distance")
 
 
+def fig_regimes():
+    """Column-width version of panels (a) and (e) of fig_canonical (main text; the full figure is in the supplement)."""
+    c = np.load(os.path.join(RES, "canonical.npz"))
+    fig = plt.figure(figsize=(COL, 1.9))
+    gs = fig.add_gridspec(1, 2, width_ratios=[1, 1.3], wspace=0.55)
+    ax = fig.add_subplot(gs[0, 0])
+    _correlation_panel(ax, c, "a", legend_anchor=(0.4, -0.3))
+    phase_ax = fig.add_subplot(gs[0, 1])
+    _phase_panel(fig, phase_ax, c, "b", legend_anchor=(0.4, -0.3))
+    # give (a) the height of the square map, so the titles and legends line up
+    fig.canvas.draw()
+    pa, pb = ax.get_position(), phase_ax.get_position()
+    ax.set_position([pa.x0, pb.y0, pa.width, pb.height])
+    save(fig, "fig_regimes")
+
+
 # ---------------------------------------------------------------- Fig: simulated strange situation (npj Section 6.2)
+
+SSP_TITLES = {"secure": r"Secure, $\varepsilon_{Am}$ 0.1", "moderately avoidant": r"$\varepsilon_{Av}$ 0.4",
+              "strongly avoidant": r"$\varepsilon_{Av}$ 0.9", "moderately ambivalent": r"$\varepsilon_{Am}$ 0.4",
+              "strongly ambivalent": r"$\varepsilon_{Am}$ 0.9"}
+SSP_TRACE_HANDLES = [Line2D([], [], color=INK, lw=0.8, label="distance"),
+                     Line2D([], [], color=CHILD, lw=3, label="child calls"),
+                     Line2D([], [], color=CAREGIVER, lw=3, label="caregiver calls")]
+
+
+def _ssp_traces(ax, d, k):
+    """Distance between the agents and their calls over the last 1500 steps of regime k."""
+    t = np.arange(int(d["steps"]))
+    w = slice(-1500, None)
+    ax.plot(t[w] - t[w][0], d["dist"][w, k], color=INK, lw=0.6)
+    for y, series, col in ((1.62, d["voc_c"][w, k], CHILD), (1.82, d["voc_p"][w, k], CAREGIVER)):
+        on = series > 0
+        ax.fill_between(t[w] - t[w][0], y - 0.07, y + 0.07, where=on, color=col, lw=0, step="mid")
+    ax.set_ylim(0, 1.95); ax.set_xlim(0, 1500)
+    ax.set_yticks([0, 0.5, 1.0, 1.5]) if k == 0 else ax.set_yticks([])
+    if k == 0:
+        ax.set_ylabel("distance", fontsize=6.5)
+    ax.set_xlabel("step", fontsize=6.5)
+    ax.tick_params(labelsize=5.8)
+    tidy(ax)
+
 
 def fig_sim_ssp():
     d = np.load(os.path.join(RES, "sim_ssp.npz"))
     names = [str(n) for n in d["names"]]
-    titles = {"secure": r"Secure, $\varepsilon_{Am}$ 0.1", "moderately avoidant": r"$\varepsilon_{Av}$ 0.4",
-              "strongly avoidant": r"$\varepsilon_{Av}$ 0.9", "moderately ambivalent": r"$\varepsilon_{Am}$ 0.4",
-              "strongly ambivalent": r"$\varepsilon_{Am}$ 0.9"}
     n = len(names)
     fig = plt.figure(figsize=(DCOL, 2.75))
     gs = fig.add_gridspec(2, n, height_ratios=[1.25, 1], hspace=0.45, wspace=0.3)
     last = slice(-3000, None)
-    t = np.arange(int(d["steps"]))
     for k, name in enumerate(names):
         ax = fig.add_subplot(gs[0, k])
         cp = d["child_pos"][last, k]
@@ -720,27 +744,29 @@ def fig_sim_ssp():
         ax.set_xticks([]); ax.set_yticks([])
         for sp in ax.spines.values():
             sp.set_color(FAINT)
-        ax.set_title(f"({'abcde'[k]}) {titles[name]}", fontsize=6.6, loc="left", color=INK)
+        ax.set_title(f"({'abcde'[k]}) {SSP_TITLES[name]}", fontsize=6.6, loc="left", color=INK)
         ax.text(0.5, -0.1, f"near caregiver {100 * d['near'][k]:.0f}%", transform=ax.transAxes, ha="center",
                 va="top", fontsize=6, color=MUTED)
-        ax = fig.add_subplot(gs[1, k])
-        w = slice(-1500, None)
-        ax.plot(t[w] - t[w][0], d["dist"][w, k], color=INK, lw=0.6)
-        for y, series, col in ((1.62, d["voc_c"][w, k], CHILD), (1.82, d["voc_p"][w, k], CAREGIVER)):
-            on = series > 0
-            ax.fill_between(t[w] - t[w][0], y - 0.07, y + 0.07, where=on, color=col, lw=0, step="mid")
-        ax.set_ylim(0, 1.95); ax.set_xlim(0, 1500)
-        ax.set_yticks([0, 0.5, 1.0, 1.5]) if k == 0 else ax.set_yticks([])
-        if k == 0:
-            ax.set_ylabel("distance", fontsize=6.5)
-        ax.set_xlabel("step", fontsize=6.5)
-        ax.tick_params(labelsize=5.8)
-        tidy(ax)
+        _ssp_traces(fig.add_subplot(gs[1, k]), d, k)
     handles = [Line2D([], [], color=CHILD, lw=0.8, label="child path"), Line2D([], [], color=CAREGIVER, lw=0.8, label="caregiver"),
-               Line2D([], [], color=MUTED, ls=":", label="near-caregiver square"), Line2D([], [], color=INK, lw=0.8, label="distance"),
-               Line2D([], [], color=CHILD, lw=3, label="child calls"), Line2D([], [], color=CAREGIVER, lw=3, label="caregiver calls")]
+               Line2D([], [], color=MUTED, ls=":", label="near-caregiver square")] + SSP_TRACE_HANDLES
     fig.legend(handles=handles, loc="lower center", ncol=6, bbox_to_anchor=(0.5, -0.13), fontsize=6)
     save(fig, "fig_sim_ssp")
+
+
+def fig_sim_traces():
+    """The distance-and-calls row of fig_sim_ssp, with the time near the caregiver in each title (main text; the
+    full figure, with the paths, is in the supplement)."""
+    d = np.load(os.path.join(RES, "sim_ssp.npz"))
+    names = [str(n) for n in d["names"]]
+    fig, axes = plt.subplots(1, len(names), figsize=(DCOL, 1.4))
+    for k, (ax, name) in enumerate(zip(axes, names)):
+        _ssp_traces(ax, d, k)
+        ax.set_title(f"({'abcde'[k]}) {SSP_TITLES[name]}\nnear caregiver {100 * d['near'][k]:.0f}%",
+                     fontsize=6.6, loc="left", color=INK, linespacing=1.3)
+    fig.legend(handles=SSP_TRACE_HANDLES, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.04), fontsize=6)
+    fig.tight_layout(w_pad=0.8, rect=(0, 0.1, 1, 1))
+    save(fig, "fig_sim_traces")
 
 
 # ---------------------------------------------------------------- Fig: Gazebo sweeps
@@ -765,11 +791,11 @@ def fig_gazebo_sweeps():
                 m = np.array([Xtr[sel & (Ytr[:, k] == u), fi].mean() for u in sv]) * 100
                 sd = np.array([Xtr[sel & (Ytr[:, k] == u), fi].std() for u in sv]) * 100
                 ax.fill_between(sv, m - sd, m + sd, color=DECOUPLED, alpha=0.15, lw=0)
-                ax.plot(sv, m, color=DECOUPLED, lw=0.8, alpha=0.8, label="stand-in, private models (mean $\\pm$ s.d.)")
+                ax.plot(sv, m, color=DECOUPLED, lw=0.8, alpha=0.8, label="stand-in, Decoupled (mean $\\pm$ s.d.)")
             for controller, start, color, marker, hollow, off, lab in (
-                    ("coupled", "random", MUTED, "s", False, -0.012, "Gazebo, shared needs"),
-                    ("decoupled", "random", DECOUPLED, "o", False, 0.0, "Gazebo, private models (random start)"),
-                    ("decoupled", "identical", DECOUPLED, "o", True, 0.012, "Gazebo, private models (identical start)")):
+                    ("coupled", "random", MUTED, "s", False, -0.012, "Gazebo, Coupled reference"),
+                    ("decoupled", "random", DECOUPLED, "o", False, 0.0, "Gazebo, Decoupled (random)"),
+                    ("decoupled", "identical", DECOUPLED, "o", True, 0.012, "Gazebo, Decoupled (identical)")):
                 g = by_value(select(rows, controller, start, axis), axis, key, include_escaped=True)
                 g = {x: 100 * vals for x, vals in g.items()}
                 plot_points(ax, g, color, marker, off, hollow=hollow, ms=2.8, label=lab + " (mean $\\pm$ s.d.)", err="sd")
@@ -800,7 +826,7 @@ def fig_inverse():
             ax.text(j, i, str(c), ha="center", va="center", fontsize=7, color="white" if frac > 0.6 else INK)
         ax.set_xticks(range(3)); ax.set_yticks(range(3))
         ax.set_xticklabels(classes, rotation=30, ha="right"); ax.set_yticklabels(classes)
-        ax.set_xlabel("predicted"); ax.set_ylabel("true" if name == "child" else "")
+        ax.set_xlabel("predicted"); ax.set_ylabel("generating label" if name == "child" else "")
         panel(ax, letter, f"{title}: {inv[f'{name}/test_acc'] * 100:.0f}%")
         ax.title.set_fontsize(6.8)
     ax = axes[2]
@@ -817,7 +843,7 @@ def fig_inverse():
             ax.errorbar(np.array(xs) + off, [np.mean(g[x]) for x in xs], yerr=[np.std(g[x]) for x in xs], fmt=mk,
                         ms=2.8, color=col, mfc=col if name == "dyad" else "white", mec=col, mew=0.8, elinewidth=0.6)
     ax.plot([0, 0.9], [0, 0.9], color=FAINT, lw=0.6)
-    ax.set_xlabel(r"true $\varepsilon$ (Gazebo runs)"); ax.set_ylabel(r"estimated $\varepsilon$ (mean $\pm$ s.d.)")
+    ax.set_xlabel(r"generating $\varepsilon$ (Gazebo runs)"); ax.set_ylabel(r"estimated $\varepsilon$ (mean $\pm$ s.d.)")
     ax.set_xlim(-0.05, 0.95); ax.set_ylim(-0.05, 0.95); ax.set_aspect("equal")
     ax.legend(handles=[Line2D([], [], marker="o", ls="", mfc="white", mec=MUTED, label="child only"),
                        Line2D([], [], marker="s", ls="", color=MUTED, label="both agents"),
@@ -884,6 +910,9 @@ def fig_estimator():
             for a, (agent, col) in enumerate((("child", CHILD), ("parent", CAREGIVER))):
                 med = np.nanmedian(e[f"open/{kind}/{tag}/{agent}/r2"][rng])
                 ax.bar(x0 + a * 0.38, np.clip(med, -1, 1), width=0.34, color=col, edgecolor="white", lw=0.5)
+                if med < -1:                       # clipped bar: mark it and print the value
+                    ax.text(x0 + a * 0.38, -1.0, f"{med:.1f}", rotation=90, ha="center", va="bottom", fontsize=5,
+                            color="white")
             ticks.append(x0 + 0.19); labels.append(name)
             x0 += 1
         x0 += 0.5
@@ -935,7 +964,7 @@ def fig_odometry():
     ax = axes[0]
     ax.plot(r.child_gt[:, 0], r.child_gt[:, 1], color=CHILD, lw=0.7, label="ground truth")
     ax.plot(r.child_odom[:, 0], r.child_odom[:, 1], color=CAREGIVER, lw=0.7, label="wheel odometry")
-    low, high = mf.arena_limits(r)
+    low, high = metrics.arena_limits(r)
     ax.add_patch(Rectangle(low, r.arena_size, r.arena_size, fill=False, lw=0.6, edgecolor=FAINT))
     ax.set_aspect("equal"); ax.set_xlabel("x (m)"); ax.set_ylabel("y (m)")
     ax.legend(loc="upper center", fontsize=5.8, bbox_to_anchor=(0.5, -0.28), ncol=2, columnspacing=0.8)
@@ -959,8 +988,8 @@ def fig_odometry():
 
 if __name__ == "__main__":
     np.seterr(all="ignore")
-    which = sys.argv[1:] or ["strips", "belief", "belief_log", "maps", "estimator", "estimation", "anchoring", "long",
-                             "gazebo_regimes", "gazebo_timelines", "gazebo_sweeps", "inverse", "stability", "arena",
-                             "odometry"]
+    which = sys.argv[1:] or ["regimes", "canonical", "canonical_distance", "sim_traces", "sim_ssp", "strips", "belief",
+                             "belief_log", "maps", "estimator", "estimation", "anchoring", "long", "gazebo_regimes",
+                             "gazebo_sweeps", "inverse", "stability", "arena", "odometry"]
     for name in which:
         globals()[f"fig_{name}"]()

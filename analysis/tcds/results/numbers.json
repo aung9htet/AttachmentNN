@@ -1,12 +1,12 @@
 {
  "replay": {
-  "n_runs": 557,
-  "n_pass": 557,
+  "n_runs": 671,
+  "n_pass": 671,
   "by_controller": {
    "baseline": {
-    "n": 57,
-    "passed": 57,
-    "diverged": 35
+    "n": 114,
+    "passed": 114,
+    "diverged": 71
    },
    "baseline-observed": {
     "n": 57,
@@ -19,9 +19,9 @@
     "diverged": 53
    },
    "decoupled": {
-    "n": 174,
-    "passed": 174,
-    "diverged": 57
+    "n": 231,
+    "passed": 231,
+    "diverged": 83
    },
    "notebook": {
     "n": 57,
@@ -35,7 +35,7 @@
    }
   },
   "rtf_median": 0.974,
-  "rtf_min": 0.758
+  "rtf_min": 0.594
  },
  "offline": {
   "strips180/avoidant/0.1": {
@@ -12694,6 +12694,10 @@
     "mean": null,
     "ci": null
    },
+   "track_rmse_x": {
+    "mean": null,
+    "ci": null
+   },
    "detune_model": {
     "mean": null,
     "ci": null
@@ -12725,6 +12729,10 @@
     "mean": 0.194,
     "ci": 0.103
    },
+   "track_rmse_x": {
+    "mean": 0.794,
+    "ci": 0.063
+   },
    "detune_model": {
     "mean": 6.11,
     "ci": 2.248
@@ -12742,6 +12750,41 @@
     "ci": 0.024
    }
   },
+  "decoupled-own": {
+   "n": 12,
+   "r": {
+    "mean": -0.484,
+    "ci": 0.192
+   },
+   "belief_c": {
+    "mean": -0.9,
+    "ci": 0.113
+   },
+   "track_r": {
+    "mean": 0.61,
+    "ci": 0.157
+   },
+   "track_rmse_x": {
+    "mean": 0.562,
+    "ci": 0.137
+   },
+   "detune_model": {
+    "mean": 2.783,
+    "ci": 5.052
+   },
+   "detune_own": {
+    "mean": 3.25,
+    "ci": 5.044
+   },
+   "reciprocity": {
+    "mean": 0.324,
+    "ci": 0.149
+   },
+   "est_r_c": {
+    "mean": 0.851,
+    "ci": 0.035
+   }
+  },
   "observed-gt": {
    "n": 12,
    "r": {
@@ -12755,6 +12798,10 @@
    "track_r": {
     "mean": 0.309,
     "ci": 0.331
+   },
+   "track_rmse_x": {
+    "mean": 0.674,
+    "ci": 0.182
    },
    "detune_model": {
     "mean": 4.642,
@@ -12787,6 +12834,10 @@
     "mean": 0.133,
     "ci": 0.218
    },
+   "track_rmse_x": {
+    "mean": 0.82,
+    "ci": 0.124
+   },
    "detune_model": {
     "mean": 3.492,
     "ci": 1.707
@@ -12804,6 +12855,41 @@
     "ci": 0.04
    }
   },
+  "baseline-own": {
+   "n": 12,
+   "r": {
+    "mean": -0.679,
+    "ci": 0.243
+   },
+   "belief_c": {
+    "mean": -0.916,
+    "ci": 0.094
+   },
+   "track_r": {
+    "mean": 0.772,
+    "ci": 0.194
+   },
+   "track_rmse_x": {
+    "mean": 0.412,
+    "ci": 0.116
+   },
+   "detune_model": {
+    "mean": 0.467,
+    "ci": 0.692
+   },
+   "detune_own": {
+    "mean": 1.4,
+    "ci": 1.419
+   },
+   "reciprocity": {
+    "mean": 0.226,
+    "ci": 0.157
+   },
+   "est_r_c": {
+    "mean": 0.871,
+    "ci": 0.02
+   }
+  },
   "baseline-observed-gt": {
    "n": 12,
    "r": {
@@ -12817,6 +12903,10 @@
    "track_r": {
     "mean": 0.756,
     "ci": 0.11
+   },
+   "track_rmse_x": {
+    "mean": 0.433,
+    "ci": 0.104
    },
    "detune_model": {
     "mean": 0.233,
@@ -12839,30 +12929,56 @@
    "r": 0.788,
    "belief_c": 0.787,
    "track_r": null,
+   "track_rmse_x": null,
+   "est_r_c": null,
    "reciprocity": 0.988
   },
   "decoupled/avoidant0.1": {
    "r": 0.178,
    "belief_c": -0.407,
    "track_r": 0.162,
+   "track_rmse_x": 0.739,
+   "est_r_c": -0.818,
    "reciprocity": 0.767
+  },
+  "decoupled-own/avoidant0.1": {
+   "r": 0.418,
+   "belief_c": 0.849,
+   "track_r": 0.585,
+   "track_rmse_x": 0.543,
+   "est_r_c": 0.957,
+   "reciprocity": 0.867
   },
   "observed-gt/avoidant0.1": {
    "r": 0.433,
    "belief_c": 0.857,
    "track_r": 0.592,
+   "track_rmse_x": 0.546,
+   "est_r_c": 0.961,
    "reciprocity": 0.857
   },
   "baseline/avoidant0.1": {
    "r": 0.454,
    "belief_c": 0.472,
    "track_r": 0.401,
+   "track_rmse_x": 0.641,
+   "est_r_c": -0.765,
    "reciprocity": 0.928
+  },
+  "baseline-own/avoidant0.1": {
+   "r": 0.579,
+   "belief_c": 0.765,
+   "track_r": 0.756,
+   "track_rmse_x": 0.401,
+   "est_r_c": 0.973,
+   "reciprocity": 0.94
   },
   "baseline-observed-gt/avoidant0.1": {
    "r": 0.602,
    "belief_c": 0.774,
    "track_r": 0.789,
+   "track_rmse_x": 0.382,
+   "est_r_c": 0.974,
    "reciprocity": 0.92
   }
  },
@@ -13307,15 +13423,33 @@
   "n_train": 1110,
   "n_test": 176,
   "n_test_random": 99,
+  "n_test_bounded": 120,
+  "test_counts": [
+   28,
+   74,
+   74
+  ],
+  "test_counts_bounded": [
+   28,
+   28,
+   64
+  ],
+  "majority": 0.42,
+  "majority_bounded": 0.533,
   "child": {
    "sim_cv": 0.652,
    "transfer": 0.602,
    "transfer_identical": 0.649,
    "transfer_random": 0.566,
    "gazebo_cv": 0.557,
+   "transfer_bounded": 0.483,
    "mae": [
     0.181,
     0.193
+   ],
+   "mae_bounded": [
+    0.148,
+    0.188
    ],
    "confusion": [
     [
@@ -13348,9 +13482,14 @@
    "transfer_identical": 0.883,
    "transfer_random": 0.889,
    "gazebo_cv": 0.739,
+   "transfer_bounded": 0.842,
    "mae": [
     0.046,
     0.073
+   ],
+   "mae_bounded": [
+    0.035,
+    0.069
    ],
    "confusion": [
     [
@@ -13378,12 +13517,80 @@
     "caregiver call bouts/min": 0.255,
     "distance cycles/min": 0.049
    }
+  },
+  "calibration": {
+   "n_calibration_runs": 101,
+   "gazebo_explore_speed": 0.12430209442273697,
+   "gazebo_explore_speed_test_runs": 0.12559182514420575,
+   "speeds": [
+    0.08,
+    0.09,
+    0.1,
+    0.11,
+    0.12,
+    0.13,
+    0.14,
+    0.15,
+    0.16,
+    0.17,
+    0.18,
+    0.19,
+    0.2
+   ],
+   "stand_in_explore_speed": [
+    0.0685475800033956,
+    0.07810687821965606,
+    0.08574905563714501,
+    0.09231457838580057,
+    0.0991322572447339,
+    0.10156761807703377,
+    0.11080237635614291,
+    0.113119667582721,
+    0.12022940047026244,
+    0.12344954714306172,
+    0.1270181491227977,
+    0.1351165394497418,
+    0.13716195780961177
+   ],
+   "squared_error": [
+    0.0032882599247924344,
+    0.002294080665896593,
+    0.00165870234792434,
+    0.0012429312701576606,
+    0.0008611404156300079,
+    0.0007286423308244806,
+    0.0004571523633952288,
+    0.00045577857076052326,
+    0.0003095520888124578,
+    0.00032402556419557343,
+    0.0003346727546908151,
+    0.00048799028464574355,
+    0.0005995131430626677
+   ],
+   "calibrated_speed": 0.16,
+   "current_speed": 0.12,
+   "transfer": {
+    "child": {
+     "acc": 0.5568181818181818,
+     "mae": [
+      0.19452240491939216,
+      0.21657717363320586
+     ]
+    },
+    "dyad": {
+     "acc": 0.8806818181818182,
+     "mae": [
+      0.04365818212130369,
+      0.07708387191504462
+     ]
+    }
+   }
   }
  },
  "odometry": {
   "n": 95,
   "median_end_error_m": 1.055
  },
- "stuck_median": 0.08,
- "n_gazebo_runs": 577
+ "stuck_median": 0.079,
+ "n_gazebo_runs": 691
 }
